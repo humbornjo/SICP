@@ -10,10 +10,11 @@ brew install mit-scheme
 
 ```
 
+I really appreciate the quote MIT guys put at the end of each interpretation.
+
 # Usage 
 
 ```
 ./eval.sh <FILE_NAME>
 ```
-
 
