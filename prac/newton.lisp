@@ -6,27 +6,22 @@
 (define (abs x) (if (< x 0) (- x) x))
 
 (define (sqrt_iter guess x) 
-  (avg guess (/ x guess))
-)
+  (avg guess (/ x guess)))
 
 ; exercise 1.6: http://community.schemewiki.org/?sicp-ex-1.6
 (define (new-if predicate then-clause else-clause)
   (cond (predicate then-clause)
-    (else else-clause)
-  )
-)
+    (else else-clause)))
 
 ; exercise 1.7
 (define (sqrt_enough guess x)
-  (< (abs (- (square guess) x)) (* x 1e-2))
-)
+  (< (abs (- (square guess) x)) (* x 1e-2)))
 
 (define (sqrt_newton guess x) 
   (if (sqrt_enough guess x) 
     guess
     (sqrt_newton (sqrt_iter guess x) x)
-  )
-)
+  ))
 
 (sqrt_newton 1 1e-127)
 
