@@ -20,3 +20,5 @@ I really appreciate the quote MIT guys put at the end of each interpretation.
 
 # Reverie
 - I think I can start trying to understand knuth and latex after reading **1.3.4**
+- **exercise 1.44** is really good
+- "higher-order procedures enhance the power of our language by enabling us to manipulate, and thereby to reason in terms of, general methods of computation" SICP p108
