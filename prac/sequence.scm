@@ -231,14 +231,5 @@
 (length (queens 11))
 
 ; exercise 2.43
-(flatmap
-  (lambda (new-row)
-    (map (lambda (rest-of-queens)
-           (adjoin-position new-row k rest-of-queens))
-         (queen-cols (- k 1))))
-  (enumerate-interval 1 board-size))
-
-;; procedure in 2.42 is of O(n!)
-;; 2.43 need (k-1)*O(k!) more cost
-
-
+;; http://community.schemewiki.org/?sicp-ex-2.43 
+;; I think @woofy's answer is right
