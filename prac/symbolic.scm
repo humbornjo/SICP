@@ -232,5 +232,206 @@
         (else (cons (car s2) (union-set s1 (cdr s2))))))
 
 (union-set odds evens)
+(union-set odds odds)
 (union-set '() evens)
+
+; Sets as binary trees
+(define (entry tree) (car tree))
+(define (left-branch tree) (cadr tree))
+(define (right-branch tree) (caddr tree))
+(define (make-tree entry left right)
+  (list entry left right))
+
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((= x (entry set)) true)
+        ((< x (entry set))
+         (element-of-set? x (left-branch set)))
+        ((> x (entry set))
+         (element-of-set? x (right-branch set)))))
+
+(define (adjoin-set x set)
+  (cond ((null? set) (make-tree x '() '()))
+        ((= x (entry set)) set)
+        ((< x (entry set))
+         (make-tree (entry set)
+                    (adjoin-set x (left-branch set))
+                    (right-branch set)))
+        ((> x (entry set))
+         (make-tree (entry set) (left-branch set)
+                    (adjoin-set x (right-branch set))))))
+
+; exercise 2.63
+(define (tree->list-1 tree)
+  (if (null? tree)
+    '()
+    (append (tree->list-1 (left-branch tree))
+            (cons (entry tree)
+                  (tree->list-1
+                    (right-branch tree))))))
+
+(define (tree->list-2 tree)
+  (define (copy-to-list tree result-list)
+    (if (null? tree)
+      result-list
+      (copy-to-list (left-branch tree)
+                    (cons (entry tree)
+                          (copy-to-list
+                            (right-branch tree)
+                            result-list)))))
+  (copy-to-list tree '()))
+
+;; a same
+;; b fine, append is O(n/2), so the first is O(nlogn), sec is O(n)
+
+; exercise 2.64
+(define (list->tree elements)
+  (car (partial-tree elements (length elements))))
+(define (partial-tree elts n)
+  (if (= n 0)
+    (cons '() elts)
+    (let ((left-size (quotient (- n 1) 2)))
+      (let ((left-result
+              (partial-tree elts left-size)))
+        (let ((left-tree (car left-result))
+              (non-left-elts (cdr left-result))
+              (right-size (- n (+ left-size 1))))
+          (let ((this-entry (car non-left-elts))
+                (right-result
+                  (partial-tree
+                    (cdr non-left-elts)
+                    right-size)))
+            (let ((right-tree (car right-result))
+                  (remaining-elts
+                    (cdr right-result)))
+              (cons (make-tree this-entry
+                               left-tree
+                               right-tree)
+                    remaining-elts))))))))
+
+(list->tree evens)
+
+;; a
+
+;; 5
+;; |\
+;; | \
+;; |  \
+;; 1  9
+;;  \ |\
+;;  3 7 \
+;;      11
+
+;; b
+;; O(n)
+
+; exercise 2.65
+(define (union-set-n s1 s2)
+  (list->tree (union-set (tree->list-1 s1) (tree->list-1 s2))))
+
+(define (intersection-set-n s1 s2)
+  (list->tree (intersection-set (tree->list-1 s1) (tree->list-1 s2))))
+
+(intersection-set-n 
+   (list->tree '(1 3 5 7 10 14 15 20 31 50 51 53 55 57 59 61 63 65)) 
+   (list->tree '(1 3 5 8 10 24 25 30 41 50 52 54 56 58 60 62 64 66)))
+
+(union-set-n 
+   (list->tree '(1 3 5 7 10 14 15 20 31 50 51 53 55 57 59 61 63 65)) 
+   (list->tree '(1 3 5 8 10 24 25 30 41 50 52 54 56 58 60 62 64 66)))
+
+; Sets and information retrieval
+
+; exercise 2.66
+(define (lookup given-key set-of-records)
+  (if (null? set-of-records) #f
+    (let ((val (entry set-of-records)))
+      (cond ((= given-key val) val)
+            ((> given-key val) (lookup given-key (right-branch set-of-records)))
+            (else (lookup given-key (left-branch set-of-records)))))))
+
+(lookup 31 (list->tree '(1 3 5 7 10 14 15 20 31 50 51 53 55 57 59 61 63 65)))
+
+; huffman code 
+(define (make-leaf symbol weight) (list 'leaf symbol weight))
+(define (leaf? object) (eq? (car object) 'leaf))
+(define (symbol-leaf x) (cadr x))
+(define (weight-leaf x) (caddr x))
+(define (make-code-tree left right)
+  (list left
+        right
+        (append (symbols left) (symbols right))
+        (+ (weight left) (weight right))))
+
+(define (left-branch tree) (car tree))
+(define (right-branch tree) (cadr tree))
+(define (symbols tree)
+  (if (leaf? tree)
+    (list (symbol-leaf tree))
+    (caddr tree)))
+(define (weight tree)
+  (if (leaf? tree)
+    (weight-leaf tree)
+    (cadddr tree)))
+(define (decode bits tree)
+  (define (decode-1 bits current-branch)
+    (if (null? bits)
+      '()
+      (let ((next-branch
+              (choose-branch (car bits) current-branch)))
+        (if (leaf? next-branch)
+          (cons (symbol-leaf next-branch)
+                (decode-1 (cdr bits) tree))
+          (decode-1 (cdr bits) next-branch)))))
+  (decode-1 bits tree))
+
+(define (choose-branch bit branch)
+  (cond ((= bit 0) (left-branch branch))
+        ((= bit 1) (right-branch branch))
+        (else (error "bad bit: CHOOSE-BRANCH" bit))))
+
+(define (adjoin-set x set)
+  (cond ((null? set) (list x))
+        ((< (weight x) (weight (car set))) (cons x set))
+        (else (cons (car set)
+                    (adjoin-set x (cdr set))))))
+
+(define (make-leaf-set pairs)
+  (if (null? pairs)
+    '()
+    (let ((pair (car pairs)))
+      (adjoin-set (make-leaf (car pair) ; symbol
+                             (cadr pair)) ; frequency
+                  (make-leaf-set (cdr pairs))))))
+
+; exercise 2.67
+(define sample-tree
+  (make-code-tree (make-leaf 'A 4)
+                  (make-code-tree
+                    (make-leaf 'B 2)
+                    (make-code-tree
+                      (make-leaf 'D 1)
+                      (make-leaf 'C 1)))))
+(define sample-message '(0 1 1 0 0 1 0 1 0 1 1 1 0))
+
+(decode sample-message sample-tree)
+sample-tree
+
+; exercise 2.68
+(define (encode message tree)
+  (if (null? message)
+    '()
+    (append (encode-symbol (car message) tree)
+            (encode (cdr message) tree))))
+
+(define (encode-symbol sym tree) 
+  (if (leaf? tree) 
+    (if (eq? sym (symbol-leaf tree)) 
+      '() 
+      (error "missing symbol: ENCODE-SYMBOL" sym)) 
+    (let ((left (left-branch tree))) 
+      (if (memq sym (symbols left)) 
+        (cons 0 (encode-symbol sym left)) 
+        (cons 1 (encode-symbol sym (right-branch tree))))))) 
+
 
