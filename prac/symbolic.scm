@@ -434,4 +434,32 @@ sample-tree
         (cons 0 (encode-symbol sym left)) 
         (cons 1 (encode-symbol sym (right-branch tree))))))) 
 
+; exercise 2.69
+(define (generate-huffman-tree pairs)
+  (successive-merge (make-leaf-set pairs)))
 
+(define (successive-merge ol)
+  (if (null? (cdr ol))
+    (car ol)
+    (let
+      ((node (make-code-tree (car ol) (cadr ol))))
+      (successive-merge (adjoin-set node (cddr ol))))))
+
+(generate-huffman-tree '((A 4) (B 2) (C 1) (D 1)))
+
+; exercise 2.70
+(define rocktree (generate-huffman-tree '((A 2) (NA 16) (BOOM  1) (SHA 3) (GET 2) (YIP 9) (JOB 2) (WAH 1))))  
+
+(define rock-song '(Get a job Sha na na na na na na na na Get a job Sha na na na na na na na na Wah yip yip yip yip yip yip yip yip yip Sha boom)) 
+
+(define encoded-rock-song (encode rock-song rocktree)) 
+
+(length  encoded-rock-song)
+(* 3 (length rock-song))
+
+; exercise 2.71
+; 1 -> (n-1)
+
+; exercise 2.72
+; best for O(1), worst for O(n)
+; avg in 2.71 is O(n^2) 
