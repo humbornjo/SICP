@@ -6,16 +6,19 @@ lisp seems interesting.
 
 **mit-scheme**
 ```bash
-brew install mit-scheme
+# use mit-scheme or chicken scheme compiler
 
+brew install mit-scheme
+brew install chicken 
 ```
 
 I really appreciate the quote MIT guys put at the end of each interpretation.
 
 # Usage 
 
-```
-./eval.sh <FILE_NAME>
+```bash
+./eval.sh <FILE_NAME> # mit-scheme
+csi -s <FILE_NAME>    # chicken 
 ```
 
 # Reverie
