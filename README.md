@@ -25,6 +25,7 @@ csi -s <FILE_NAME>    # chicken
 - I think I can start trying to understand knuth and latex after reading **1.3.4**
 - **exercise 1.44** is really good
 - "higher-order procedures enhance the power of our language by enabling us to manipulate, and thereby to reason in terms of, general methods of computation" SICP p108
-- "elements is said to be closed under an operation ... We do not use the word “closure” in this second sense in this book." SICP p134. Fuck c++ closure and rust closure, and all the language that use CLOSURE as the term for variable capturing.
+- "elements is said to be closed under an operation ... We do not use the word “closure” in this second sense in this book." SICP p134
 - THe word nil is a contraction of the Latin word *nihil*, which means "nothing".
 - **exercise 3.20** is good
+- "The fact of concurrent execution, either because the world operates in parallel or because our computers do, entails additional complexity in our understanding of time." SICP p403
