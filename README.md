@@ -29,3 +29,4 @@ csi -s <FILE_NAME>    # chicken
 - THe word nil is a contraction of the Latin word *nihil*, which means "nothing".
 - **exercise 3.20** is good
 - "The fact of concurrent execution, either because the world operates in parallel or because our computers do, entails additional complexity in our understanding of time." SICP p403
+- "Buridan argued that a perfectly rational dog placed between two equally attractive sources of food will starve to death, because it is incapable of deciding which to go to first." SICP p424
