@@ -15,17 +15,22 @@
   (let ((already-run? false) (result false))
     (lambda ()
       (if (not already-run?)
-        (begin (set! result (proc))
+        (begin (set! result proc)
                (set! already-run? true)
                result)
         result))))
 
-(define (delay proc) (memo-proc (lambda () proc)))
-(define (delay proc) (lambda () proc))
-(define (force delayed-object) (delayed-object))
+;;; in scheme lisp, all the args will be evaluated instantly
+;;; the only way to implement `delay` is using macro
+;;; the definition in book is but a psudo code snippet
+;;; use define-syntax to utilize macro in csi
 
-(define (cons-stream a b) 
-  (cons a (delay b)))
+;; (define (cons-stream a b) 
+;;   (cons a (delay b)))
+;; (define delay memo-proc)
+(define-syntax delay (syntax-rules () ((delay proc) (lambda () proc))))
+(define-syntax cons-stream (syntax-rules () ((cons-stream a b) (cons a (delay b)))))
+(define (force delayed-object) (delayed-object))
 
 (define stream-null? null?)
 (define the-empty-stream nil)
@@ -81,7 +86,6 @@
 (newline)
 
 ; ex 3.50
-(newline)
 (define (stream-map proc . argstreams)
   (if (stream-null? (car argstreams))
     the-empty-stream
@@ -91,12 +95,6 @@
              (cons proc (map stream-cdr argstreams))))))
 
 ; ex 3.51
-(define (stream-map proc s)
-  (if (stream-null? s)
-    (begin  (display "reachend") the-empty-stream )
-    (cons-stream (proc (stream-car s))
-                 (stream-map proc (stream-cdr s)))))
-
 (define (show x)
   (display-line x)
   x)
@@ -132,8 +130,201 @@
 (display "ref 7: ")
 (display (stream-ref y 7))
 (display-stream z)
-;; wont change because memory only preverse (curr, next) and iter_num, not affecing sum
 (newline) 
 
+; Infinite Streams
+(define (integers-starting-from n)
+  (cons-stream n (integers-starting-from (+ n 1))))
 
+(define integers (integers-starting-from 1))
+
+(define (divisible? x y) (= (remainder x y) 0))
+(define no-sevens
+  (stream-filter (lambda (x) (not (divisible? x 7)))
+                 integers))
+
+(newline)
+(display "the 100th number cant div by 7: ")
+(display (stream-ref no-sevens 100))
+(newline)
+
+(define (fibgen a b) (cons-stream a (fibgen b (+ a b))))
+(define fibs (fibgen 0 1))
+
+(define (sieve stream)
+  (cons-stream
+    (stream-car stream)
+    (sieve (stream-filter
+             (lambda (x)
+               (not (divisible? x (stream-car stream))))
+             (stream-cdr stream)))))
+(define primes (sieve (integers-starting-from 2)))
+(display "the 50th prime is: ")
+(display (stream-ref primes 50))
+
+;; (define ss (integers-starting-from 2))
+;; (define (mprime ss) 
+;;   (cons-stream 
+;;     (stream-car ss)
+;;     (mprime 
+;;       (stream-filter 
+;;         (lambda (x) 
+;;           (not (divisible? x (stream-car ss))))
+;;         (stream-cdr ss)))))
+;;
+;; (newline)
+;; (display "my 50th prime is: ")
+;; (display (stream-ref (mprime ss) 50))
+
+(define ones (cons-stream 1 ones))
+(define (add-streams s1 s2) (stream-map + s1 s2))
+(define integers
+  (cons-stream 1 (add-streams ones integers)))
+(newline)
+(display "the 50th integer is: ")
+(display (stream-ref integers 50))
+
+(define fibs
+  (cons-stream
+    0
+    (cons-stream 1 (add-streams (stream-cdr fibs) fibs))))
+
+(define (scale-stream stream factor)
+  (stream-map (lambda (x) (* x factor))
+              stream))
+(define double (cons-stream 1 (scale-stream double 2)))
+
+(define primes
+  (cons-stream
+    2
+    (stream-filter prime? (integers-starting-from 3))))
+
+(define (prime? n)
+  (define (iter ps)
+    (cond ((> (square (stream-car ps)) n) true)
+          ((divisible? n (stream-car ps)) false)
+          (else (iter (stream-cdr ps)))))
+  (iter primes))
+
+; ex 3.53
+;; 1, 2, 4, 8, 2^n
+(newline) 
+
+; ex 3.54
+(define (mul-streams s1 s2) (stream-map * s1 s2))
+(define factorials
+  (cons-stream 1 (mul-streams (stream-cdr integers) factorials)))
+
+(newline) 
+(display "*ex 3.54")
+(newline) 
+(display "the 5th factorial 5! is: ")
+(display (stream-ref factorials 4)) 
+(newline) 
+
+; ex 3.55
+;; my answer
+(define (partial-sum s) 
+  (define (iter ss)
+    (cons-stream 
+      (stream-car ss) 
+      (iter (add-streams s (stream-cdr ss)))))
+  (iter s))
+
+;; http://community.schemewiki.org/?sicp-ex-3.55 @huntzhan
+;; what a beautiful def
+(define (partial-sums s) 
+  (add-streams s (cons-stream 0 (partial-sums s))))
+
+(newline) 
+(display "*ex 3.55")
+(newline)
+(display "the 5th add sum is: ")
+(display (stream-ref (partial-sum integers) 4))
+(newline) 
+
+; ex 3.56
+(define (merge s1 s2)
+  (cond ((stream-null? s1) s2)
+        ((stream-null? s2) s1)
+        (else
+          (let ((s1car (stream-car s1))
+                (s2car (stream-car s2)))
+            (cond ((< s1car s2car)
+                   (cons-stream
+                     s1car
+                     (merge (stream-cdr s1) s2)))
+                  ((> s1car s2car)
+                   (cons-stream
+                     s2car
+                     (merge s1 (stream-cdr s2))))
+                  (else
+                    (cons-stream
+                      s1car
+                      (merge (stream-cdr s1)
+                             (stream-cdr s2)))))))))
+
+(define S (cons-stream 1 (merge (scale-stream S 2) (merge (scale-stream S 3) (scale-stream S 5)))))
+
+(newline) 
+(display "*ex 3.56")
+(newline)
+(display "the 6th hamming number is: ")
+(display (stream-ref S 5))
+(newline)
+
+; ex 3.57
+;; (define fibs
+;;   (cons-stream
+;;     0
+;;     (cons-stream 1 (add-streams (stream-cdr fibs) fibs))))
+
+;; the num of addition is the number of add-streams
+;; for any fib number other than the first two, 
+;; num_add(n) = num_add(n-1) + num_add(n-2) + 1
+;; fib(3) = 1, num_add(3) = 0+1
+;; fib(4) = 2, num_add(4) = 1+0+1
+;; fib(5) = 3, num_add(5) = 1+2+1
+;; which is greater than golden ratio exp
+
+
+; ex 3.58
+;; (define (expand num den radix)
+;;   (cons-stream
+;;     (quotient (* num radix) den)
+;;     (expand (remainder (* num radix) den) den radix)))
+
+;; (expand 1 7 10): 1, 4, 2, 8, 5, 7, loop
+
+; ec 3.59
+;; a
+(define (integrate-series s) 
+  (stream-map / s integers))
+
+;; b
+(define exp-series (cons-stream 1 (integrate-series exp-series)))
+
+(define cosine-series (cons-stream 1 (scale-stream sine-series -1)))
+(define sine-series (cons-stream 0 cosine-series))
+
+; ex 3.60
+(define (mul-series s1 s2) 
+  (cons-stream (* (stream-car s1) (stream-car s2)) 
+               (add-streams 
+                 (scale-stream (stream-cdr s2) (stream-car s1)) 
+                 (mul-series (stream-cdr s1) s2))))
+
+; ex 3.61
+(define (invert-unit-series s)
+  (cons-stream 
+    1 
+    (scale-stream 
+      (mul-series (stream-cdr s) (invert-unit-series s)) 
+      -1)))
+
+; ex 3.62
+(define (div-series s1 s2)
+  (mul-series s1 (invert-unit-series s2)))
+
+(define tangent-series (div-series sine-series cosine-series))
 
