@@ -4,6 +4,9 @@
 (define false #f)
 (define nil '())
 
+(define (square x)
+  (* x x))
+
 (define (prime? x) 
   (define (test divisor) 
     (cond ((> (* divisor divisor) x) true) 
@@ -28,7 +31,8 @@
 ;; (define (cons-stream a b) 
 ;;   (cons a (delay b)))
 ;; (define delay memo-proc)
-(define-syntax delay (syntax-rules () ((delay proc) (lambda () proc))))
+;; (define-syntax delay (syntax-rules () ((delay proc) (lambda () proc))))
+(define-syntax delay (syntax-rules () ((delay proc) ((memo-proc (lambda () proc))))))
 (define-syntax cons-stream (syntax-rules () ((cons-stream a b) (cons a (delay b)))))
 (define (force delayed-object) (delayed-object))
 
@@ -328,3 +332,98 @@
 
 (define tangent-series (div-series sine-series cosine-series))
 
+
+; Exploiting the Stream Paradigm
+(define (average x y) (/ (+ x y) 2))
+
+(define (sqrt-improve guess x)
+  (average guess (/ x guess)))
+
+(define (sqrt-stream x)
+  (define guesses
+    (cons-stream
+      1.0
+      (stream-map (lambda (guess) (sqrt-improve guess x))
+                  guesses)))
+  guesses)
+;; (display-stream (sqrt-stream 2))
+
+(define (pi-summands n)
+  (cons-stream (/ 1.0 n)
+               (stream-map - (pi-summands (+ n 2)))))
+(define pi-stream
+  (scale-stream (partial-sums (pi-summands 1)) 4))
+;; (display-stream pi-stream)
+
+
+(define (euler-transform s)
+  (let ((s0 (stream-ref s 0)) ; Sn 1
+        (s1 (stream-ref s 1)) ; Sn
+        (s2 (stream-ref s 2))) ; Sn+1
+    (cons-stream (- s2 (/ (square (- s2 s1))
+                          (+ s0 (* -2 s1) s2)))
+                 (euler-transform (stream-cdr s)))))
+;; (display-stream (euler-transform pi-stream))
+
+(define (make-tableau transform s)
+  (cons-stream s (make-tableau transform (transform s))))
+(define (accelerated-sequence transform s)
+  (stream-map stream-car (make-tableau transform s)))
+;; (display-stream (accelerated-sequence euler-transform pi-stream))
+
+; ex 3.63
+(define (sqrt-stream x)
+  (define guesses
+    (cons-stream
+      1.0
+      (stream-map (lambda (guess) (sqrt-improve guess x))
+                  guesses)))
+  guesses)
+
+(define (sqrt-stream x)
+  (cons-stream 
+    1.0 
+    (stream-map (lambda (guess) (sqrt-improve guess x))
+      (sqrt-stream x))))
+
+;; each time we call (sqrt-stream x), it create a env point to the global env
+;; however, when refer to guesses, always the obj in the same env (if memo is enabled)
+;; that says, louis's will keep construct the same stream each time call stream-cdr
+
+; ex 3.64
+(define (stream-limit s tolerance)
+  (let 
+    ((s0 (stream-car s))
+     (s1 (stream-car (stream-cdr s))))
+    (if (< (abs (- s0 s1)) tolerance)
+      s1
+      (stream-limit (stream-cdr s) tolerance))))
+
+(define (sqrt x tolerance)
+  (stream-limit (sqrt-stream x) tolerance))
+
+(newline) 
+(display "*ex 3.64")
+(newline)
+(display "the sqrt of 99 is: ")
+(display (sqrt 99 0.00001))
+(newline)
+
+; ex 3.65
+(define (log2-summends n)
+    (cons-stream 
+      (/ 1.0 n)
+      (scale-stream (log2-summends (+ 1 n)) -1)))
+
+(define log2-stream
+  (partial-sum (log2-summends 1)))
+(newline) 
+(display "*ex 3.65")
+(newline) 
+(display (stream-limit (accelerated-sequence euler-transform log2-stream) 0.00000001))
+
+
+; Infinite streams of pairs
+(stream-filter
+  (lambda (pair) (prime? (+ (car pair) (cadr pair))))
+  int-pairs)
