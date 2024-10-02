@@ -659,7 +659,7 @@
     (define is1
       (cons-stream
         v0
-        (add-streams is1 (scale-stream s (\ dt c)))))
+        (add-streams is1 (scale-stream s (/ dt c)))))
     (define is2
       (scale-stream s r))
     (add-streams is1 is2))
@@ -701,3 +701,113 @@
               (smooth input-stream)
               (cons-stream 0 (smooth input-stream))))
 
+
+; 3.5.4 Streams and Delayed Evaluation
+(define (solve f y0 dt)
+  (define y (integral dy y0 dt))
+  (define dy (stream-map f y))
+  y)
+
+(define (integral delayed-integrand initial-value dt)
+  (define int
+    (cons-stream
+      initial-value
+      (let ((integrand (force delayed-integrand)))
+        (add-streams (scale-stream integrand dt) int))))
+  int)
+
+(define (solve f y0 dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (stream-map f y))
+  y)
+
+(newline)
+(display "e: ")
+(display (stream-ref (solve (lambda (y) y)
+                   1
+                   0.1)
+            10))
+(newline)
+
+; ex 3.77
+(define (integral delayed-integrand initial-value dt)
+  (cons-stream
+    initial-value
+    (let ((integrand (force delayed-integrand)))
+      (if (stream-null? integrand)
+        the-empty-stream
+        (integral (stream-cdr integrand)
+                  (+ (* dt (stream-car integrand))
+                     initial-value)
+                  dt)))))
+
+; ex 3.78
+(define (solve-2nd a b dt y0 dy0)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (stream-add (scale-stream dy a) (scale-stream y b)))
+  y)
+
+; ex 3.79
+(define(general-solve-2nd f y0 dy0 dt) 
+  (define y (integral (delay dy) y0 dt)) 
+  (define dy (integral (delay ddy) dy0 dt)) 
+  (define ddy (stream-map f dy y)) 
+  y) 
+  
+; ex 3.80
+(define (RLC r l c dt) 
+  (define (inner vc0 il0) 
+    (define vc (integral (delay dvc) vc0 dt))
+    (define il (integral (delay dil) il0 dt))
+    (define dvc (stream-map (lambda (x) (/ x (* -1 c))) il))
+    (define dil (add-streams (scale-stream vc (/ 1 l)) (scale-stream il (/ r (* -1 l)))))
+    (cons vc il))
+  inner)
+
+; 3.5.5 Modularity of Functional Programs and Modularity of Objects
+(define random-init 1)
+(define (rand-update x) (+ 1 x))
+(define rand
+  (let ((x random-init))
+    (lambda ()
+      (set! x (rand-update x))
+      x)))
+(define random-numbers
+  (cons-stream
+    random-init
+    (stream-map rand-update random-numbers)))
+
+(define (map-successive-pairs f s)
+  (cons-stream
+    (f (stream-car s) (stream-car (stream-cdr s)))
+    (map-successive-pairs f (stream-cdr (stream-cdr s)))))
+(define cesaro-stream
+  (map-successive-pairs
+    (lambda (r1 r2) (= (gcd r1 r2) 1))
+    random-numbers))
+
+(define (monte-carlo experiment-stream passed failed)
+  (define (next passed failed)
+    (cons-stream
+      (/ passed (+ passed failed))
+      (monte-carlo
+        (stream-cdr experiment-stream) passed failed)))
+  (if (stream-car experiment-stream)
+    (next (+ passed 1) failed)
+    (next passed (+ failed 1))))
+
+(define (sqrt x)
+  (stream-limit (sqrt-stream x) 0.001))
+(define pi
+  (stream-map
+    (lambda (p) (sqrt (/ 6 p)))
+    (monte-carlo cesaro-stream 0 0)))
+
+(define (stream-withdraw balance amount-stream)
+(cons-stream
+balance
+(stream-withdraw (- balance (stream-car amount-stream))
+(stream-cdr amount-stream))))
+
+(display (stream-ref (stream-withdraw 100 integers) 10))
