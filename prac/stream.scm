@@ -7,6 +7,9 @@
 (define (square x)
   (* x x))
 
+(define (cube x)
+  (* x x x))
+
 (define (prime? x) 
   (define (test divisor) 
     (cond ((> (* divisor divisor) x) true) 
@@ -421,9 +424,280 @@
 (display "*ex 3.65")
 (newline) 
 (display (stream-limit (accelerated-sequence euler-transform log2-stream) 0.00000001))
-
+(newline) 
 
 ; Infinite streams of pairs
-(stream-filter
-  (lambda (pair) (prime? (+ (car pair) (cadr pair))))
-  int-pairs)
+;; (stream-filter
+;;   (lambda (pair) (prime? (+ (car pair) (cadr pair))))
+;;   int-pairs)
+(define (stream-append s1 s2)
+  (if (stream-null? s1)
+    s2
+    (cons-stream (stream-car s1)
+                 (stream-append (stream-cdr s1) s2))))
+
+(define S (stream-enumerate-interval 0 3))
+;; (define S (integers-starting-from 0))
+(define T (stream-enumerate-interval 10 14))
+
+; my version of pairs and it is a wrong version (refer to ex 3.68)
+(define (permutate-pair s t) 
+  (if (or (stream-null? s) (stream-null? t))
+    the-empty-stream
+    (stream-append 
+      (stream-map (lambda (x) (cons x (stream-car t))) s) 
+      (permutate-pair (stream-cdr s) (stream-cdr t)))))
+;; (display-stream (permutate-pair integers integers))
+
+
+; official impl
+(define (interleave s1 s2)
+  (if (stream-null? s1)
+    s2
+    (cons-stream (stream-car s1)
+                 (interleave s2 (stream-cdr s1)))))
+(define (pairs s t)
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (interleave
+      (stream-map (lambda (x) (list (stream-car s) x))
+                  (stream-cdr t))
+      (pairs (stream-cdr s) (stream-cdr t)))))
+
+
+; ex 3.66
+; http://community.schemewiki.org/?sicp-ex-3.66 check my answer @humbornjo and brandon's @brandon.
+(define (pos m n) 
+  (define init (if (= m n) 1 (* 2 (- n m))))
+  (define (inner x res) 
+    (if (= x 1)
+      res
+      (inner (- x 1) (+ 1 (* 2 res)))))
+  (inner m init))
+
+(define (pnum m n)
+  (- (pos m n) 1))
+
+(newline) 
+(display "*ex 3.66")
+(newline) 
+(display "ans for (1,   100): ")
+(display (pnum 1 100))
+(newline) 
+(display "ans for (99,  100): ")
+(display (pnum 99 100))
+(newline) 
+(display "ans for (100, 100): ")
+(display (pnum 100 100))
+(newline) 
+
+; ex 3.67
+;; (define (pairs s t)
+;;   (cons-stream
+;;     (list (stream-car s) (stream-car t))
+;;     (interleave
+;;       (stream-map (lambda (x) (list (stream-car s) x))
+;;                   (stream-cdr t))
+;;       (pairs (stream-cdr s) t))))
+
+; ex 3.68
+;; (define (pairs s t)
+;;   (interleave
+;;     (stream-map (lambda (x) (list (stream-car s) x))
+;;                 t)
+;;     (pairs (stream-cdr s) (stream-cdr t))))
+
+; there is no delay, the pairs will be forever evaluated
+
+; ex 3.69
+(define (triples s t u) 
+  (cons-stream
+    (list (stream-car s) (stream-car t) (stream-car u))
+    (interleave
+      (stream-map (lambda (x) (cons (stream-car s) x))
+                  (stream-cdr (pairs t u)))
+      (triples (stream-cdr s) (stream-cdr t) (stream-cdr u)))))
+
+(define pythagorean-triples
+  (stream-filter 
+    (lambda (x) 
+      (let ((i (car x))
+            (j (cadr x))
+            (k (caddr x)))
+        (= (+ (square i) (square j)) (square k))))
+    (triples integers integers integers)))
+
+(newline) 
+(display "*ex 3.69")
+(newline) 
+(display "the 2nd pythagorean triples is: ")
+(display (stream-ref pythagorean-triples 1))
+(newline) 
+
+; ex 3.70
+(newline) 
+(display "*ex 3.70")
+(newline) 
+
+(define (merge-weighted s1 s2 w)
+  (cond ((stream-null? s1) s2)
+        ((stream-null? s2) s1)
+        (else
+          (let ((s1car (stream-car s1))
+                (s2car (stream-car s2))
+                (s1w (w (stream-car s1)))
+                (s2w (w (stream-car s2))))
+            (cond ((< s1w s2w)
+                   (cons-stream
+                     s1car
+                     (merge-weighted (stream-cdr s1) s2 w)))
+                  (else
+                   (cons-stream
+                     s2car
+                     (merge-weighted s1 (stream-cdr s2) w))))))))
+
+(define (weighted-pairs s t w)
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (merge-weighted
+      (stream-map (lambda (x) (list (stream-car s) x)) (stream-cdr t))
+      (weighted-pairs (stream-cdr s) (stream-cdr t) w)
+      w)))
+  
+;; a
+(define stream-a 
+  (weighted-pairs integers integers (lambda (x) (+ (car x) (cadr x)))))
+(display "(a) the 4th pair is: ")
+(display (stream-ref stream-a 3))
+(newline) 
+
+;; b
+(define nor-div
+  (stream-filter
+    (lambda (x) (not (divisible? x 2)))
+    (stream-filter 
+      (lambda (x) (not (divisible? x 3)))
+      (stream-filter 
+        (lambda (x) (not (divisible? x 5)))
+        integers))))
+
+(define stream-b 
+  (weighted-pairs nor-div nor-div 
+    (lambda (x) 
+      (+ (* 2 (car x)) (* 3 (cadr x)) (* 5 (car x) (cadr x))))))
+(display "(b) the 4th pair is: ")
+(display (stream-ref stream-b 3))
+(newline) 
+
+; ex 3.71
+(define ordered-cube 
+  (weighted-pairs integers integers (lambda (x) (+ (cube (car x)) (cube (cadr x))))))
+
+(define (cube-sum x)
+  (+ (cube (car x)) (cube (cadr x))))
+
+(define (ramanujan s)
+  (let ((x1 (stream-car s))
+        (x2 (stream-car (stream-cdr s))))
+    (if (= (cube-sum x1) (cube-sum x2)) 
+      (cons-stream 
+        (list (stream-car s) (stream-car (stream-cdr s)))
+        (ramanujan (stream-cdr s)))
+      (ramanujan (stream-cdr s)))))
+
+(define ramanujan-stream (ramanujan ordered-cube))
+(newline) 
+(display "*ex 3.71")
+(newline) 
+(display "the 2nd ramanujan pairs are: ")
+(display (stream-ref ramanujan-stream 1))
+(newline) 
+(display "the 6th ramanujan pairs are: ")
+(display (stream-ref ramanujan-stream 5))
+(newline) 
+
+; ex 3.72
+(define ordered-square 
+  (weighted-pairs integers integers (lambda (x) (+ (square (car x)) (square (cadr x))))))
+
+(define (square-sum x)
+  (+ (square (car x)) (square (cadr x))))
+
+(define (ramen s)
+  (let ((x1 (stream-car s))
+        (x2 (stream-car (stream-cdr s)))
+        (x3 (stream-car (stream-cdr (stream-cdr s)))))
+    (if (= (square-sum x1) (square-sum x2) (square-sum x3)) 
+      (cons-stream 
+        (list x1 x2 x3)
+        (ramen (stream-cdr s)))
+      (ramen (stream-cdr s)))))
+
+(define ramen-stream (ramen ordered-square))
+(newline) 
+(display "*ex 3.72")
+(newline) 
+(display "the 2nd ramen pairs are: ")
+(display (stream-ref ramen-stream 1))
+(newline) 
+(display "the 6th ramen pairs are: ")
+(display (stream-ref ramen-stream 5))
+(newline) 
+
+
+; Streams as signals 
+(define (integral integrand initial-value dt)
+  (define int
+    (cons-stream initial-value
+                 (add-streams (scale-stream integrand dt)
+                              int)))
+  int)
+
+; ex 3.73
+(define (RC r c dt) 
+  (define (inner s v0) 
+    (define is1
+      (cons-stream
+        v0
+        (add-streams is1 (scale-stream s (\ dt c)))))
+    (define is2
+      (scale-stream s r))
+    (add-streams is1 is2))
+  inner)
+
+; ex 3.74
+;; (define (make-zero-crossings input-stream last-value)
+;;   (cons-stream
+;;     (sign-change-detector
+;;       (stream-car input-stream)
+;;       last-value)
+;;     (make-zero-crossings
+;;       (stream-cdr input-stream)
+;;       (stream-car input-stream))))
+;; (define zero-crossings
+;;   (make-zero-crossings sense-data 0))
+
+;; (define zero-crossings
+;;   (stream-map sign-change-detector
+;;               sense-data
+;;               (cons-stream 0 sense-data)))
+
+; ex 3.75
+;; (define (make-zero-crossings input-stream last-value last-avpt) 
+;;   (let ((avpt (/ (+ (stream-car input-stream) last-value) 2))) 
+;;     (cons-stream (sign-change-detetor avpt last-avpt) 
+;;                  (make-zero-crossings (stream-cdr input-stream) 
+;;                                       (stream-car input-stream) 
+;;                                       avpt)))) 
+
+;; ex 3.76
+(define (smooth s)
+  (scale-stream 
+    (add-streams s (cons-stream 0 s))
+    0.5))
+
+(define (make-zero-crossings input-stream) 
+  (stream-map sign-change-detetor 
+              (smooth input-stream)
+              (cons-stream 0 (smooth input-stream))))
+
