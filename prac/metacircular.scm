@@ -1,3 +1,9 @@
+(define test-env 1)
+(define nil '())
+
+(define true 'true)
+(define false 'false)
+
 ; 4.1.1
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
@@ -202,6 +208,78 @@
 
 ; ex 4.3
 
+;; http://community.schemewiki.org/?sicp-ex-4.3
+;; check ans by @meteorgan
+
+; ex 4.4
+
+(define (and? exp) (tagged-list? exp 'and))
+(define (or? exp) (tagged-list? exp 'or))
+
+;; special form
+(define (eval-and exp env)
+  (define (inner seq env prev)
+    (cond ((null? seq) prev)
+          ((not (true? (eval (car seq) env))) 'false)
+          (else (inner (cdr seq) env (eval (car seq) env)))))
+  (inner (cdr exp) env 'true))
+
+(define (eval-or exp env)
+  (define (inner seq env prev)
+    (cond ((null? (car seq)) prev)
+          ((true? (eval (car seq) env)) 'true)
+          (else (inner (cdr seq) env (eval (car seq) env)))))
+  (inner (cdr exp) env 'false))
+
+;; derived form 
+(define (and->if exp) (expand-and (cdr exp) 'true))
+(define (expand-and seq prev)
+  (if (null? seq) 
+    prev
+    (let ((first (car seq))
+          (rest (cdr seq)))
+      (make-if first
+               (expand-and rest (eval first env))
+               'false))))
+
+(define (or->if exp) (expand-or (cdr exp) 'false))
+(define (expand-or seq prev)
+  (if (null? seq) 
+    prev
+    (let ((first (car seq))
+          (rest (cdr seq)))
+      (make-if first
+               (expand-and rest (eval first env))
+               'true))))
+
+; ex 4.5
+
+(define (expand-clauses clauses)
+  (if (null? clauses)
+    'false ; no else clause
+    (let ((first (car clauses))
+          (rest (cdr clauses)))
+      (if (cond-else-clause? first)
+        (if (null? rest)
+          (sequence->exp (cond-actions first))
+          (error "ELSE clause isn't last: COND->IF" clauses))
+        (make-if (cond-predicate first)
+                 (if (eq? '=> (cadr first)) 
+                   ((caddr first) (cond-predicate first))
+                   (sequence->exp (cond-actions first)))
+                 (expand-clauses rest))))))
+
+; ex 4.6
+
+(define (let->combination exp)
+  (let ((clauses (cadr exp))
+        (body (caddr exp)))
+    (let ((vars (map car clauses))
+          (vals (map cadr clauses)))
+      (cons (make-lambda vars body) vals))))
+
+(define (let? exp) (tagged-list? exp 'let))
+
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
@@ -212,6 +290,7 @@
         ((lambda? exp) (make-procedure (lambda-parameters exp)
                                        (lambda-body exp)
                                        env))
+        ((let? exp) (eval (let->combination exp) env))
         ((begin? exp)
          (eval-sequence (begin-actions exp) env))
         ((cond? exp) (eval (cond->if exp) env))
@@ -220,3 +299,82 @@
                 (list-of-values (operands exp) env)))
         (else
           (error "Unknown expression type: EVAL" exp))))
+
+; ex 4.7
+
+(define (make-let seq body) (cons 'let (cons seq body)))
+(define (let*->nested-lets exp)
+  (define (inner clauses body)
+    (if (null? clauses)
+      (sequence->exp body)
+      (make-let (list (car clauses)) (list (inner (cdr clauses) body)))))
+  (inner (cadr exp) (cddr exp)))
+
+(display "ex 4.7:")
+(newline)
+(display (let*->nested-lets '(let* ((x 1) (y 2)) x y)))
+(newline)
+
+;; if non-drived trans is applied, the env state will be very hard to follow
+
+; ex 4.8
+
+(define (named-let? expr) (and (let? expr) (symbol? (cadr expr))))
+(define (make-definition func args body) (list 'define (cons func args) body))
+
+(define (let->combination exp)
+  (if (named-let? exp) 
+    (let ((func (cadr exp))
+          (clauses (caddr exp))
+          (body (cadddr exp)))
+      (let ((vars (map car clauses))
+            (vals (map cadr clauses)))
+        (sequence->exp
+          (list (make-definition func vars body) (cons func vals)))))
+    (let ((clauses (cadr exp))
+          (body (caddr exp)))
+      (let ((vars (map car clauses))
+            (vals (map cadr clauses)))
+        (cons (make-lambda vars body) vals)))))
+
+(newline)
+(display "ex 4.8:")
+(newline)
+(display (let->combination '(let a ((k 10)) (+ 1 a k))))
+(newline)
+
+; ex 4.9
+
+;; suppose impl c style for loop which
+;; for init condition step: exp
+;; (for init condition step exp)
+
+;; example: (for ((a 10)) (< a 20) (lambda (x) (+ x 1)) (begine (display a) (newline)))
+
+(define (for->combination exp)
+  (let ((actions (cdr exp))
+        (args (cadr exp)))
+    (let ((var (list (car args)))
+          (val (list (cadr args)))
+          (condition (cadr actions))
+          (step (caddr actions))
+          (body (cadddr actions)))
+      (sequence->exp (list (make-definition 
+                            'while-ref 
+                            var
+                            (make-if condition (sequence->exp (list body (list 'while-ref step))) 'nil))
+                          (cons 'while-ref val))))))
+
+(newline)
+(display "ex 4.9:")
+(newline)
+(display (for->combination '(for (a 10) (< a 20) (+ a 1) (begin (display a) (newline)))))
+(newline)
+
+;; ;; try run the output clause
+;; (begin 
+;;   (define (while-ref a) 
+;;     (if (< a 20) (begin (begin (display a) (newline)) (while-ref (+ a 1))) nil))
+;;   (while-ref 10))
+
+
