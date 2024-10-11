@@ -352,29 +352,177 @@
 ;; example: (for ((a 10)) (< a 20) (lambda (x) (+ x 1)) (begine (display a) (newline)))
 
 (define (for->combination exp)
-  (let ((actions (cdr exp))
-        (args (cadr exp)))
-    (let ((var (list (car args)))
-          (val (list (cadr args)))
-          (condition (cadr actions))
-          (step (caddr actions))
-          (body (cadddr actions)))
-      (sequence->exp (list (make-definition 
-                            'while-ref 
-                            var
-                            (make-if condition (sequence->exp (list body (list 'while-ref step))) 'nil))
-                          (cons 'while-ref val))))))
+  (let* ((actions (cdr exp))
+         (args (cadr exp))
+         (var (list (car args)))
+         (val (list (cadr args)))
+         (condition (cadr actions))
+         (step (caddr actions))
+         (body (cadddr actions)))
+    (sequence->exp (list (make-definition 
+                           'while-ref 
+                           var
+                           (make-if 
+                             condition 
+                             (sequence->exp (list body (list 'while-ref step))) 
+                             'nil))
+                         (cons 'while-ref val)))))
 
 (newline)
 (display "ex 4.9:")
 (newline)
-(display (for->combination '(for (a 10) (< a 20) (+ a 1) (begin (display a) (newline)))))
+(display (for->combination 
+           '(for (a 10) (< a 20) (+ a 1) (begin (display a) (newline)))))
 (newline)
 
-;; ;; try run the output clause
+;; ;; try run the output procedure
 ;; (begin 
 ;;   (define (while-ref a) 
 ;;     (if (< a 20) (begin (begin (display a) (newline)) (while-ref (+ a 1))) nil))
 ;;   (while-ref 10))
+
+
+; 4.1.3
+
+(define (true? x) (not (eq? x false)))
+(define (false? x) (eq? x false))
+
+(define (make-procedure parameters body env)
+  (list 'procedure parameters body env))
+(define (compound-procedure? p)
+  (tagged-list? p 'procedure))
+(define (procedure-parameters p) (cadr p))
+(define (procedure-body p) (caddr p))
+(define (procedure-environment p) (cadddr p))
+
+;! Operations on Environments
+
+(define (make-frame variables values)
+  (cons variables values))
+(define (frame-variables frame) (car frame))
+(define (frame-values frame) (cdr frame))
+(define (add-binding-to-frame! var val frame)
+  (set-car! frame (cons var (car frame)))
+  (set-cdr! frame (cons val (cdr frame))))
+
+(define (extend-environment vars vals base-env)
+  (if (= (length vars) (length vals))
+    (cons (make-frame vars vals) base-env)
+    (if (< (length vars) (length vals))
+      (error "Too many arguments supplied" vars vals)
+      (error "Too few arguments supplied" vars vals))))
+
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars)) (car vals))
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+      (error "Unbound variable" var)
+      (let ((frame (first-frame env)))
+        (scan (frame-variables frame)
+              (frame-values frame)))))
+  (env-loop env))
+
+(define (set-variable-value! var val env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars)) (set-car! vals val))
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+      (error "Unbound variable: SET!" var)
+      (let ((frame (first-frame env)))
+        (scan (frame-variables frame)
+              (frame-values frame)))))
+  (env-loop env))
+
+(define (define-variable! var val env)
+  (let ((frame (first-frame env)))
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (add-binding-to-frame! var val frame))
+            ((eq? var (car vars)) (set-car! vals val))
+            (else (scan (cdr vars) (cdr vals)))))
+    (scan (frame-variables frame) (frame-values frame))))
+
+; ex 4.11
+
+;; env -> { pairs, enclosing_env }
+
+(define (make-frame variables values)
+  (cons 'pairs (map cons variables values)))
+(define (frame-variables frame) (map car (cdr frame)))
+(define (frame-values frame) (map cdr (cdr frame)))
+(define (add-binding-to-frame! var val frame)
+  (set-cdr! frame (cons (cons var val) (cdr frame))))
+
+(newline)
+(display "ex 4.11:")
+(define f (make-frame (list 1 2 3) (list 9 8 7)))
+(newline)
+(display "frame: ")
+(display f)
+(newline)
+(display "frame vars: ")
+(display (frame-variables f))
+(newline)
+(display "frame vars: ")
+(display (frame-values f))
+(add-binding-to-frame! 4 10 f)
+(newline)
+(display "add (4, 10) frame: ")
+(display f)
+(newline)
+(display f)
+(newline)
+
+; ex 4.12
+
+;; http://community.schemewiki.org/?sicp-ex-4.12 @woofy
+
+; ex 4.13
+
+;; consider when we need to unbound a definition
+
+;; seems only when we need to refer to the def in
+;; the enclosing frame 
+
+;; e.g. eval impl in the book is not complete yet
+;;      so test should be performed with native eval
+
+;; so I believe only the def in curr frame need to 
+;; be cleared
+
+(define (make-unbound! var env)
+  (define (scan pairs prev)
+    (cond ((null? pairs)
+           (error "Unbound variable: DO NOTHING!" var))
+          ((eq? var (caar pairs)) (set-cdr! prev (cdr pairs)))
+          (else (scan (cdr pairs) pairs))))
+  (if (eq? env the-empty-environment)
+    (error "Unbound variable: DO NOTHING!" var)
+    (let ((frame (first-frame env)))
+      (scan (cdr frame) frame))))
+
+(define the-empty-environment '())
+(define (first-frame env) (car env))
+
+(newline)
+(display "ex 4.11:")
+(newline)
+(display f)
+(newline)
+(make-unbound! 4 (cons f '()))
+(display f)
+(newline)
+(make-unbound! 3 (cons f '()))
+(display f)
+(newline)
+
+; 4.1.4
 
 
