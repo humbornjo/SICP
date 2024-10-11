@@ -4,6 +4,8 @@
 (define true 'true)
 (define false 'false)
 
+(define apply-in-underlying-scheme apply)
+
 ; 4.1.1
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
@@ -512,7 +514,7 @@
 (define (first-frame env) (car env))
 
 (newline)
-(display "ex 4.11:")
+(display "ex 4.13:")
 (newline)
 (display f)
 (newline)
@@ -525,4 +527,75 @@
 
 ; 4.1.4
 
+(define (primitive-procedure? proc)
+  (tagged-list? proc 'primitive))
+(define (primitive-implementation proc) (cadr proc))
 
+(define primitive-procedures
+  (list (list 'car car)
+        (list 'cdr cdr)
+        (list 'cons cons)
+        (list 'null? null?)
+        (list 'append append)))
+(define (primitive-procedure-names)
+  (map car primitive-procedures))
+(define (primitive-procedure-objects)
+  (map (lambda (proc) (list 'primitive (cadr proc)))
+       primitive-procedures))
+
+(define (setup-environment)
+  (let ((initial-env
+          (extend-environment (primitive-procedure-names)
+                              (primitive-procedure-objects)
+                              the-empty-environment)))
+    (define-variable! 'true true initial-env)
+    (define-variable! 'false false initial-env)
+    initial-env))
+(define the-global-environment (setup-environment))
+
+(define (apply-primitive-procedure proc args)
+  (apply-in-underlying-scheme
+    (primitive-implementation proc) args))
+
+(define input-prompt ";;; M-Eval input:")
+(define output-prompt ";;; M-Eval value:")
+(define (driver-loop)
+  (prompt-for-input input-prompt)
+  (let ((input (read)))
+    (let ((output (eval input the-global-environment)))
+      (announce-output output-prompt)
+      (user-print output)))
+  (driver-loop))
+
+(define (prompt-for-input string)
+  (newline) (newline) (display string) (newline))
+(define (announce-output string)
+  (newline) (display string) (newline))
+
+(define (user-print object)
+  (if (compound-procedure? object)
+    (display (list 'compound-procedure
+                   (procedure-parameters object)
+                   (procedure-body object)
+                   '<procedure-env>))
+    (display object)))
+
+(define the-global-environment (setup-environment))
+(driver-loop)
+
+; ex 4.14
+
+;; when i call the native map, such error popped up
+;; Error: call of non-procedure: (primitive #<procedure (scheme#car x)>)
+
+;; (define (list-of-values exps env)
+;;   (if (no-operands? exps)
+;;     '()
+;;     (cons (eval (first-operand exps) env)
+;;           (list-of-values (rest-operands exps) env))))
+
+;; when eval (map car (list (cons 1 3))). eval will step 
+;; into func <list-of-values> for args [car (list (cons 1 3))], 
+;; and eval them one by one, just imagine what will happen if 
+;; we perform (eval car) or in another perspective - input 
+;; "car" only in repl.
