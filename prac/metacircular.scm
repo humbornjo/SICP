@@ -620,4 +620,79 @@
 
 ; 4.1.6
 
+; ex 4.16
+
+;; a
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars)) (if (eq? (car vals) '*unassigned*) 
+                                    (error "Unassigned variable" var)
+                                    (car vals)))
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+      (error "Unbound variable" var)
+      (let ((frame (first-frame env)))
+        (scan (frame-variables frame)
+              (frame-values frame)))))
+  (env-loop env))
+
+;; b, c
+
+;; dont think split the define to unassigned and set is a good way
+;; so here i will skip this question
+;; refer to http://community.schemewiki.org/?sicp-ex-4.16 @woofy
+(define (make-assignment var exp) 
+  (list 'set! var exp)) 
+
+(define (scan-out-defines body) 
+
+  (define (collect seq defs exps) 
+    (if (null? seq) 
+      (cons defs exps) 
+      (if (definition? (car seq)) 
+        (collect (cdr seq) (cons (car seq) defs) exps) 
+        (collect (cdr seq) defs (cons (car seq) exps))))) 
+
+  (let ((pair (collect body '() '()))) 
+    (let ((defs (car pair)) (exps (cdr pair))) 
+      (make-let (map (lambda (def)  
+                       (list (definition-variable def)  
+                             '*unassigned*)) 
+                     defs) 
+                (append  
+                  (map (lambda (def)  
+                         (make-assignment (definition-variable def) 
+                                          (definition-value def))) 
+                       defs) 
+                  exps)))))
+
+(define (make-procedure parameters body env) 
+  (list 'procedure parameters (scan-out-defines body) env))
+
+; ex 4.17
+
+;; when eval <e3>
+;; it will be sth like 
+;; (let ((var1 *unassigned*))
+;;    (set! var1 val1)
+;;    <body>)
+
+;; with: let    -> lambda
+;;       lambda -> procedure
+;; (lambda (var1) ((set! var1 val1) <body>))
+
+;; every time you call "eval-sequence" the env extend one more time
+;; "eval-sequence" is called by "compound-procedure"
+;; "compound-procedure" is only called when its tag is 'procedure
+
+;; and when you turn a let into a procedure, it will be sealed with
+;; that tag, so the env will extend.
+
+;; If we want to avoid extra env frame, then the let should not be
+;; spawned. and the easiest way to achieve that is merge the inner 
+;; lambda and outter lambda
+
 
