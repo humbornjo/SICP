@@ -133,34 +133,17 @@
     (cadddr exp)
     'false))
 
-(define (make-if predicate consequent alternative)
-  (list 'if predicate consequent alternative))
 
 (define (begin? exp) (tagged-list? exp 'begin))
 (define (begin-actions exp) (cdr exp))
-(define (last-exp? seq) (null? (cdr seq)))
-(define (first-exp seq) (car seq))
-(define (rest-exps seq) (cdr seq))
 
-(define (sequence->exp seq)
-  (cond ((null? seq) seq)
-        ((last-exp? seq) (first-exp seq))
-        (else (make-begin seq))))
 (define (make-begin seq) (cons 'begin seq))
 
 (define (application? exp) (pair? exp))
 (define (operator exp) (car exp))
 (define (operands exp) (cdr exp))
-(define (no-operands? ops) (null? ops))
-(define (first-operand ops) (car ops))
-(define (rest-operands ops) (cdr ops))
 
 (define (cond? exp) (tagged-list? exp 'cond))
-(define (cond-clauses exp) (cdr exp))
-(define (cond-else-clause? clause)
-  (eq? (cond-predicate clause) 'else))
-(define (cond-predicate clause) (car clause))
-(define (cond-actions clause) (cdr clause))
 (define (cond->if exp) (expand-clauses (cond-clauses exp)))
 (define (expand-clauses clauses)
   (if (null? clauses)
@@ -176,218 +159,10 @@
                  (sequence->exp (cond-actions first))
                  (expand-clauses rest))))))
 
-; ex 4.2
-;; a
-
-;; (define (eval exp env)
-;;   (cond ((self-evaluating? exp) exp)
-;;         ((variable? exp) (lookup-variable-value exp env))
-;;         ((quoted? exp) (text-of-quotation exp))
-;;      -> ((application? exp)
-;;      |   (apply (eval (operator exp) env)
-;;      |          (list-of-values (operands exp) env)))
-;;      |  ((assignment? exp) (eval-assignment exp env))
-;;      |  ((definition? exp) (eval-definition exp env))
-;;      |  ((if? exp) (eval-if exp env))
-;;      |  ((lambda? exp) (make-procedure (lambda-parameters exp)
-;;      |                                 (lambda-body exp)
-;;      |                                 env))
-;;      |  ((begin? exp)
-;;      |   (eval-sequence (begin-actions exp) env))
-;;      |  ((cond? exp) (eval (cond->if exp) env))
-;;      - 
-;;         (else
-;;           (error "Unknown expression type: EVAL" exp))))
-
-;; if louis move application before assignment and definition
-;; (define x 3) will be inteperated as application
-
-;; b
-
-;; (define (application? exp) (tagged-list? exp 'call))
-;; (define (operator exp) (cadr exp))
-;; (define (operands exp) (cddr exp))
-
-; ex 4.3
-
-;; http://community.schemewiki.org/?sicp-ex-4.3
-;; check ans by @meteorgan
-
-; ex 4.4
-
-(define (and? exp) (tagged-list? exp 'and))
-(define (or? exp) (tagged-list? exp 'or))
-
-;; special form
-(define (eval-and exp env)
-  (define (inner seq env prev)
-    (cond ((null? seq) prev)
-          ((not (true? (eval (car seq) env))) 'false)
-          (else (inner (cdr seq) env (eval (car seq) env)))))
-  (inner (cdr exp) env 'true))
-
-(define (eval-or exp env)
-  (define (inner seq env prev)
-    (cond ((null? (car seq)) prev)
-          ((true? (eval (car seq) env)) 'true)
-          (else (inner (cdr seq) env (eval (car seq) env)))))
-  (inner (cdr exp) env 'false))
-
-;; derived form 
-(define (and->if exp) (expand-and (cdr exp) 'true))
-(define (expand-and seq prev)
-  (if (null? seq) 
-    prev
-    (let ((first (car seq))
-          (rest (cdr seq)))
-      (make-if first
-               (expand-and rest (eval first env))
-               'false))))
-
-(define (or->if exp) (expand-or (cdr exp) 'false))
-(define (expand-or seq prev)
-  (if (null? seq) 
-    prev
-    (let ((first (car seq))
-          (rest (cdr seq)))
-      (make-if first
-               (expand-and rest (eval first env))
-               'true))))
-
-; ex 4.5
-
-(define (expand-clauses clauses)
-  (if (null? clauses)
-    'false ; no else clause
-    (let ((first (car clauses))
-          (rest (cdr clauses)))
-      (if (cond-else-clause? first)
-        (if (null? rest)
-          (sequence->exp (cond-actions first))
-          (error "ELSE clause isn't last: COND->IF" clauses))
-        (make-if (cond-predicate first)
-                 (if (eq? '=> (cadr first)) 
-                   ((caddr first) (cond-predicate first))
-                   (sequence->exp (cond-actions first)))
-                 (expand-clauses rest))))))
-
-; ex 4.6
-
-(define (let->combination exp)
-  (let ((clauses (cadr exp))
-        (body (caddr exp)))
-    (let ((vars (map car clauses))
-          (vals (map cadr clauses)))
-      (cons (make-lambda vars body) vals))))
-
-(define (let? exp) (tagged-list? exp 'let))
-
-(define (eval exp env)
-  (cond ((self-evaluating? exp) exp)
-        ((variable? exp) (lookup-variable-value exp env))
-        ((quoted? exp) (text-of-quotation exp))
-        ((assignment? exp) (eval-assignment exp env))
-        ((definition? exp) (eval-definition exp env))
-        ((if? exp) (eval-if exp env))
-        ((lambda? exp) (make-procedure (lambda-parameters exp)
-                                       (lambda-body exp)
-                                       env))
-        ((let? exp) (eval (let->combination exp) env))
-        ((begin? exp)
-         (eval-sequence (begin-actions exp) env))
-        ((cond? exp) (eval (cond->if exp) env))
-        ((application? exp)
-         (apply (eval (operator exp) env)
-                (list-of-values (operands exp) env)))
-        (else
-          (error "Unknown expression type: EVAL" exp))))
-
-; ex 4.7
-
-(define (make-let seq body) (list 'let seq body))
-(define (let*->nested-lets exp)
-  (define (inner clauses body)
-    (if (null? clauses)
-      (sequence->exp body)
-      (make-let (list (car clauses)) (list (inner (cdr clauses) body)))))
-  (inner (cadr exp) (cddr exp)))
-
-(display "ex 4.7:")
-(newline)
-(display (let*->nested-lets '(let* ((x 1) (y 2)) x y)))
-(newline)
-
-;; if non-drived trans is applied, the env state will be very hard to follow
-
-; ex 4.8
-
-(define (named-let? expr) (and (let? expr) (symbol? (cadr expr))))
 (define (make-definition func args body) (list 'define (cons func args) body))
-
-(define (let->combination exp)
-  (if (named-let? exp) 
-    (let ((func (cadr exp))
-          (clauses (caddr exp))
-          (body (cadddr exp)))
-      (let ((vars (map car clauses))
-            (vals (map cadr clauses)))
-        (sequence->exp
-          (list (make-definition func vars body) (cons func vals)))))
-    (let ((clauses (cadr exp))
-          (body (caddr exp)))
-      (let ((vars (map car clauses))
-            (vals (map cadr clauses)))
-        (cons (make-lambda vars body) vals)))))
-
-(newline)
-(display "ex 4.8:")
-(newline)
-(display (let->combination '(let a ((k 10)) (+ 1 a k))))
-(newline)
-
-; ex 4.9
-
-;; suppose impl c style for loop which
-;; for init condition step: exp
-;; (for init condition step exp)
-
-;; example: (for ((a 10)) (< a 20) (lambda (x) (+ x 1)) (begine (display a) (newline)))
-
-(define (for->combination exp)
-  (let* ((actions (cdr exp))
-         (args (cadr exp))
-         (var (list (car args)))
-         (val (list (cadr args)))
-         (condition (cadr actions))
-         (step (caddr actions))
-         (body (cadddr actions)))
-    (sequence->exp (list (make-definition 
-                           'while-ref 
-                           var
-                           (make-if 
-                             condition 
-                             (sequence->exp (list body (list 'while-ref step))) 
-                             'nil))
-                         (cons 'while-ref val)))))
-
-(newline)
-(display "ex 4.9:")
-(newline)
-(display (for->combination 
-           '(for (a 10) (< a 20) (+ a 1) (begin (display a) (newline)))))
-(newline)
-
-;; ;; try run the output procedure
-;; (begin 
-;;   (define (while-ref a) 
-;;     (if (< a 20) (begin (begin (display a) (newline)) (while-ref (+ a 1))) nil))
-;;   (while-ref 10))
-
 
 ; 4.1.3
 
-(define (true? x) (not (eq? x false)))
-(define (false? x) (eq? x false))
 
 (define (make-procedure parameters body env)
   (list 'procedure parameters body env))
@@ -451,40 +226,6 @@
             (else (scan (cdr vars) (cdr vals)))))
     (scan (frame-variables frame) (frame-values frame))))
 
-; ex 4.11
-
-;; env -> { pairs, enclosing_env }
-
-(define (make-frame variables values)
-  (cons 'pairs (map cons variables values)))
-(define (frame-variables frame) (map car (cdr frame)))
-(define (frame-values frame) (map cdr (cdr frame)))
-(define (add-binding-to-frame! var val frame)
-  (set-cdr! frame (cons (cons var val) (cdr frame))))
-
-(newline)
-(display "ex 4.11:")
-(define f (make-frame (list 1 2 3) (list 9 8 7)))
-(newline)
-(display "frame: ")
-(display f)
-(newline)
-(display "frame vars: ")
-(display (frame-variables f))
-(newline)
-(display "frame vars: ")
-(display (frame-values f))
-(add-binding-to-frame! 4 10 f)
-(newline)
-(display "add (4, 10) frame: ")
-(display f)
-(newline)
-(display f)
-(newline)
-
-; ex 4.12
-
-;; http://community.schemewiki.org/?sicp-ex-4.12 @woofy
 
 ; ex 4.13
 
