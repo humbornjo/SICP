@@ -1,0 +1,31 @@
+(load "init_util.scm")
+
+(define (named-let? expr) (and (let? expr) (symbol? (cadr expr))))
+
+(define (let->combination exp)
+  (if (named-let? exp) 
+    (let ((func (cadr exp))
+          (clauses (caddr exp))
+          (body (cadddr exp)))
+      (let ((vars (map car clauses))
+            (vals (map cadr clauses)))
+        (sequence->exp
+          (list (make-definition func vars body) (cons func vals)))))
+    (let ((clauses (cadr exp))
+          (body (caddr exp)))
+      (let ((vars (map car clauses))
+            (vals (map cadr clauses)))
+        (cons (make-lambda vars body) vals)))))
+
+;; main
+
+(assert (eq? 
+          (eval  
+            '((lambda (n) (let fib-iter 
+                            ((a 1)
+                             (b 0)
+                             (count n))
+                            (if (= count 0)
+                              b
+                              (fib-iter (+ a b) a (- count 1))))) 10))
+          55))
