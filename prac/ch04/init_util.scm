@@ -21,7 +21,7 @@
 
 (define (make-let seq body) (list 'let seq body))
 (define (make-begin seq) (cons 'begin seq))  
-(define (make-lambda parameters body) (list 'lambda parameters body))
+(define (make-lambda parameters body) (cons 'lambda (cons parameters body)))
 (define (make-definition func args body) (list 'define (cons func args) body))
 (define (make-if predicate consequent alternative) (list 'if predicate consequent alternative))
 (define (make-frame variables values) (cons variables values))

@@ -15,7 +15,7 @@
           (body (caddr exp)))
       (let ((vars (map car clauses))
             (vals (map cadr clauses)))
-        (cons (make-lambda vars body) vals)))))
+        (cons (make-lambda vars (list body)) vals)))))
 
 (define (eval exp env)
   (begin 
