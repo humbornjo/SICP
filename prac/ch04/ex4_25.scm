@@ -8,7 +8,7 @@
 
 ;; main
 
-;; * What happens if we aempt to evaluate (factorial 5)?
+;; * What happens if we attempt to evaluate (factorial 5)?
 ;; - The indefinite loop of evaluation on <(* n (factorial (- n 1)))>
 
 

@@ -20,12 +20,12 @@
 (define (rest-operands ops) (cdr ops))
 
 (define (make-let seq body) (list 'let seq body))
-(define (make-begin seq) (cons 'begin seq))  
+(define (make-begin seq) (cons 'begin seq))
 (define (make-lambda parameters body) (cons 'lambda (cons parameters body)))
 (define (make-definition func args body) (list 'define (cons func args) body))
 (define (make-if predicate consequent alternative) (list 'if predicate consequent alternative))
 (define (make-frame variables values) (cons variables values))
-(define (make-assignment var exp) (list 'set! var exp)) 
+(define (make-assignment var exp) (list 'set! var exp))
 (define (make-procedure parameters body env) (list 'procedure parameters body env))
 
 (define (cond-clauses exp) (cdr exp))
@@ -149,16 +149,30 @@
     (scan (frame-variables frame) (frame-values frame))))
 
 
+(define assert
+  (lambda (p)
+    (if (not p)
+      (error "Assert failed\n")))
+  )
+
 (define primitive-procedures
-  (list (list 'car car)
+  (list (list 'eq? eq?)
+        (list 'car car)
+        (list 'not not)
         (list 'cdr cdr)
+        (list 'cadr cadr)
         (list 'cons cons)
         (list 'null? null?)
+        (list 'error error)
+        (list 'assert assert)
         (list 'append append)
+        (list 'display display)
         (list '+ +)
         (list '* *)
         (list '- -)
         (list '= =)
+        (list '> >)
+        (list '< <)
         ))
 (define (primitive-implementation proc) (cadr proc))
 (define (primitive-procedure-names) (map car primitive-procedures))
