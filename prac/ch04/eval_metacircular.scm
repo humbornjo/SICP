@@ -3,7 +3,7 @@
 ;; introducing <let->combination>
 (define (named-let? expr) (and (let? expr) (symbol? (cadr expr))))
 (define (let->combination exp)
-  (if (named-let? exp) 
+  (if (named-let? exp)
     (let ((func (cadr exp))
           (clauses (caddr exp))
           (body (cadddr exp)))
@@ -18,9 +18,9 @@
         (cons (make-lambda vars (list body)) vals)))))
 
 (define (eval exp env)
-  (begin 
+  (begin
     (if DEBUG
-      (begin 
+      (begin
       (display "calling eval: ")
       (display exp)
       (newline)))
@@ -65,7 +65,7 @@
     (cons (eval (first-operand exps) env)
           (list-of-values (rest-operands exps) env))))
 
-; eval conditions 
+; eval conditions
 (define (eval-if exp env)
   (if (true? (eval (if-predicate exp) env))
     (eval (if-consequent exp) env)

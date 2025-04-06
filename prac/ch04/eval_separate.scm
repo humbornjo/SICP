@@ -4,9 +4,9 @@
 (define (eval exp env) ((analyze exp) env))
 
 (define (analyze exp)
-  (begin 
+  (begin
     (if DEBUG
-      (begin 
+      (begin
         (display "calling eval: ")
         (display exp)
         (newline)))

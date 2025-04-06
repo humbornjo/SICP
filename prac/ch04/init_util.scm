@@ -20,12 +20,12 @@
 (define (rest-operands ops) (cdr ops))
 
 (define (make-let seq body) (list 'let seq body))
-(define (make-begin seq) (cons 'begin seq))  
+(define (make-begin seq) (cons 'begin seq))
 (define (make-lambda parameters body) (cons 'lambda (cons parameters body)))
 (define (make-definition func args body) (list 'define (cons func args) body))
 (define (make-if predicate consequent alternative) (list 'if predicate consequent alternative))
 (define (make-frame variables values) (cons variables values))
-(define (make-assignment var exp) (list 'set! var exp)) 
+(define (make-assignment var exp) (list 'set! var exp))
 (define (make-procedure parameters body env) (list 'procedure parameters body env))
 
 (define (cond-clauses exp) (cdr exp))
@@ -155,6 +155,7 @@
         (list 'cons cons)
         (list 'null? null?)
         (list 'append append)
+        (list 'display display)
         (list '+ +)
         (list '* *)
         (list '- -)
