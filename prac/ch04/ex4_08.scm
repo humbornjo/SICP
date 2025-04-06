@@ -19,13 +19,19 @@
 
 ;; main
 
-(assert (eq? 
-          (eval  
-            '((lambda (n) (let fib-iter 
-                            ((a 1)
-                             (b 0)
-                             (count n))
-                            (if (= count 0)
-                              b
-                              (fib-iter (+ a b) a (- count 1))))) 10))
-          55))
+(assert 
+  (= 55
+     (eval 
+       `(begin 
+          (define (fib n)
+            ,(let->combination
+               '(let fib-iter 
+                  ((a 1)
+                   (b 0)
+                   (count n))
+                  (if (= count 0)
+                    b
+                    (fib-iter (+ a b) a (- count 1))))))
+          (fib 10)
+          ))
+     ))

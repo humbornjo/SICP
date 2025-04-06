@@ -8,7 +8,7 @@
         (body (caddr exp)))
     (let ((vars (map car clauses))
           (vals (map cadr clauses)))
-      (cons (make-lambda vars body) vals))))
+      (cons (make-lambda vars (list body)) vals))))
 
 (define (analyze-let exp)
   (analyze (let->combination exp)))

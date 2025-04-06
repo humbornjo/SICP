@@ -1,31 +1,28 @@
-;; top level primitives
-(define true #t)
-(define false #f)
-
-(define (tagged-list? exp tag)
-  (if (pair? exp) 
-    (eq? (car exp) tag)
-    false))
-
-(define (operator exp) (car exp))
-(define (operands exp) (cdr exp))
+(define DEBUG #f)
 
 ;; separate eval into analyze and evaluation
 (define (eval exp env) ((analyze exp) env))
 
 (define (analyze exp)
-  (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
-        ((quoted? exp) (analyze-quoted exp))
-        ((variable? exp) (analyze-variable exp))
-        ((assignment? exp) (analyze-assignment exp))
-        ((definition? exp) (analyze-definition exp))
-        ((if? exp) (analyze-if exp))
-        ((let? exp) (analyze-let exp))
-        ((lambda? exp) (analyze-lambda exp))
-        ((begin? exp) (analyze-sequence (begin-actions exp)))
-        ((cond? exp) (analyze (cond->if exp)))
-        ((application? exp) (analyze-application exp))
-        (else (error "Unknown expression type: ANALYZE" exp))))
+  (begin 
+    (if DEBUG
+      (begin 
+        (display "calling eval: ")
+        (display exp)
+        (newline)))
+    (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
+          ((quoted? exp) (analyze-quoted exp))
+          ((variable? exp) (analyze-variable exp))
+          ((assignment? exp) (analyze-assignment exp))
+          ((definition? exp) (analyze-definition exp))
+          ((if? exp) (analyze-if exp))
+          ((let? exp) (analyze-let exp))
+          ((lambda? exp) (analyze-lambda exp))
+          ((begin? exp) (analyze-sequence (begin-actions exp)))
+          ((cond? exp) (analyze (cond->if exp)))
+          ((application? exp) (analyze-application exp))
+          (else (error "Unknown expression type: ANALYZE" exp))))
+  )
 
 
 ;; analyzer
