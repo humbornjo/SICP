@@ -149,17 +149,30 @@
     (scan (frame-variables frame) (frame-values frame))))
 
 
+(define assert
+  (lambda (p)
+    (if (not p)
+      (error "Assert failed\n")))
+  )
+
 (define primitive-procedures
-  (list (list 'car car)
+  (list (list 'eq? eq?)
+        (list 'car car)
+        (list 'not not)
         (list 'cdr cdr)
+        (list 'cadr cadr)
         (list 'cons cons)
         (list 'null? null?)
+        (list 'error error)
+        (list 'assert assert)
         (list 'append append)
         (list 'display display)
         (list '+ +)
         (list '* *)
         (list '- -)
         (list '= =)
+        (list '> >)
+        (list '< <)
         ))
 (define (primitive-implementation proc) (cadr proc))
 (define (primitive-procedure-names) (map car primitive-procedures))
