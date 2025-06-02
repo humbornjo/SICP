@@ -14,7 +14,7 @@
 ;;   (lambda (x) (+ x 1)) 
 ;;   (if (eq? (square a) 25) (display a)))
 
-(load "init_util.scm")
+(load "eval_init.scm")
 
 (define (for->combination exp)
   (let* 

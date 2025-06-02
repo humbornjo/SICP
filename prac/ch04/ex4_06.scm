@@ -1,4 +1,4 @@
-(load "init_util.scm")
+(load "eval_init.scm")
 
 
 (define (let->combination exp)

@@ -1,6 +1,6 @@
 ;; main
 
-(load "init_util.scm")
+(load "eval_init.scm")
 
 ;; a
 

@@ -52,7 +52,7 @@
 
 
 ;; Test
-(load "init_util.scm")
+(load "eval_init.scm")
 
 ;; non-memorized
 (load "eval_normal.scm")
@@ -77,7 +77,7 @@
 
 
 ;; memorized
-(load "eval_normalmemo.scm")
+(load "eval_normal_memo.scm")
 (assert (eq?
           100
           (actual-value `(begin

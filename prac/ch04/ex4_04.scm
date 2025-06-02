@@ -1,4 +1,4 @@
-(load "init_util.scm")
+(load "eval_init.scm")
 
 (define (and? exp) (tagged-list? exp 'and))
 (define (or? exp) (tagged-list? exp 'or))
