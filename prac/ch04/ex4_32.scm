@@ -2,8 +2,8 @@
 ; streams of Chapter 3 and the "lazier" lazy lists described in
 ; this section. How can you take advantage of this extra laziness?
 
-(load "init_util.scm")
-(load "eval_normalmemo.scm")
+(load "init_eval.scm")
+(load "eval_normal_memo.scm")
 
 (actual-value
   `(begin

@@ -29,8 +29,8 @@
 
 ;; Answer
 
-(load "init_util.scm")
-(load "eval_normalmemo.scm")
+(load "init_eval.scm")
+(load "eval_normal_memo.scm")
 
 (define procedure-parameters
   (lambda (procedure)

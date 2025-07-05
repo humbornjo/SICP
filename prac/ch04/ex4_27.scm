@@ -53,7 +53,7 @@
 ;;   => 2
 
 ;; test
-(load "init_util.scm")
+(load "init_eval.scm")
 (load "eval_normal.scm")
 
 (assert (eq?

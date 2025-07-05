@@ -12,7 +12,7 @@
 
 ;; Answer
 
-(load "init_util.scm")
+(load "init_eval.scm")
 
 (define (text-of-quotation exp)
   (if (and (not (null? (cdr exp))) (pair? (car (cdr exp))))

@@ -1,6 +1,6 @@
 ;; main
 
-(load "init_util.scm")
+(load "init_eval.scm")
 (load "eval_separate.scm")
 
 (define (let->combination exp)

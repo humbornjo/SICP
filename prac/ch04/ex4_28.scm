@@ -22,7 +22,7 @@
 ;; opperator's params is not coupled with the primitive operator,
 ;; thunk will be spawned, which cant be resolved by eval.
 
-(load "init_util.scm")
+(load "init_eval.scm")
 (load "eval_normal.scm")
 
 ;; uncomment the following to see the expected error

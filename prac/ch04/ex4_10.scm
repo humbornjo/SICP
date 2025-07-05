@@ -1,6 +1,6 @@
 ;; triplet operator in c
 
-(load "init_util.scm")
+(load "init_eval.scm")
 
 (define (if? exp)
   (cond ((tagged-list? exp 'if) #t)

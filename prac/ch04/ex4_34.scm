@@ -7,8 +7,8 @@
 
 ;; Answer
 
-(load "init_util.scm")
-(load "eval_normalmemo.scm")
+(load "init_eval.scm")
+(load "eval_normal_memo.scm")
 
 ; object might be a lazy pair expression
 (define (user-print object)
