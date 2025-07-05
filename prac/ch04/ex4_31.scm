@@ -29,7 +29,7 @@
 
 ;; Answer
 
-(load "init_util.scm")
+(load "init_eval.scm")
 (load "eval_normalmemo.scm")
 
 (define procedure-parameters

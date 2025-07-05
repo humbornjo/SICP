@@ -193,4 +193,3 @@
     (define-variable! 'false false initial-env)
     initial-env))
 (define the-global-environment (setup-environment))
-

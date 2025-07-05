@@ -22,7 +22,7 @@
 ;; native eval. So I believe only the def in curr frame need to be cleared.
 
 
-(load "init_util.scm")
+(load "init_eval.scm")
 
 (define env (extend-environment `(1 2 3) (list 9 8 7) the-empty-environment))
 (make-unbound! '3 env)

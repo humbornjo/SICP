@@ -52,7 +52,7 @@
 
 
 ;; Test
-(load "init_util.scm")
+(load "init_eval.scm")
 
 ;; non-memorized
 (load "eval_normal.scm")
