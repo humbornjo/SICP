@@ -18,3 +18,23 @@
   (require (<= low high))
   (amb low (an-integer-between (+ low 1) high)))
 
+
+;; Test
+
+(load "eval_init_amb.scm")
+(load "eval_separate_amb.scm")
+
+(define test-input
+  `(begin
+     (define (an-integer-between low high)
+       (require (<= low high))
+       (amb low (an-integer-between (+ low 1) high)))
+     (an-integer-between 1 3)))
+
+(ambeval test-input
+         the-global-environment
+         ;; ambeval success
+         (lambda (val next-alternative)
+           (assert (= val 1)))
+         ;; ambeval failure
+         (lambda () "Glorious Death"))

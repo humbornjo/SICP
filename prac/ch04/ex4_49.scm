@@ -9,7 +9,7 @@
 
 ;; Answer
 
-(load "./init_amb.scm")
+(load "./eval_init_amb.scm")
 
 (define (select items)
   (amb (car items)

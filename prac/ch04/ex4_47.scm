@@ -16,8 +16,9 @@
 ;; Answer
 
 ; It wont work, because `parse-word` would consume a input, which
-; means that the matching verb token has been consumed when
-; reaching the `parse-verb-phrase` (the second operand of `amb`).
+; means, as long as the stream is not exhausted, it will `amb`
+; the next alternative. Resulting in endless recursion.
 ;
 ; If we interchange the order of operands, it will be indefinitely
-; and recursively trapped in `parse-verb-phrase`.
+; and recursively trapped inside `parse-verb-phrase` on invoking
+; `parse-prepositional-phrase` without trying to parse single verb.

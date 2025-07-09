@@ -71,7 +71,7 @@
 
 ;; main 
 
-(load "init_eval.scm")
+(load "eval_init.scm")
 
 (define env (extend-environment (list '1 '2 '3) (list 9 8 7) the-empty-environment))
 

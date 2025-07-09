@@ -1,5 +1,5 @@
 ; load init_util for function like make-lambda, etc.
-(load "init_eval.scm")
+(load "eval_init.scm")
 
 (define (unless->if unless-exp)
   (let*

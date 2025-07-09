@@ -1,4 +1,4 @@
-(load "init_eval.scm")
+(load "eval_init.scm")
 
 (define (list-of-values-l2r exps env)
   (if (no-operands? exps)

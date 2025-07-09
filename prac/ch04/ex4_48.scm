@@ -6,7 +6,7 @@
 
 ;; Answer
 
-(load "./init_amb.scm")
+(load "./eval_init_amb.scm")
 
 (define adverbs '(adv quickly slowly patiently))
 

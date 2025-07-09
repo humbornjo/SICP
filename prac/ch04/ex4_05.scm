@@ -1,4 +1,4 @@
-(load "init_eval.scm")
+(load "eval_init.scm")
 
 (define (expand-clauses clauses)
   (if (null? clauses)
