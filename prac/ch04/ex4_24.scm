@@ -2,7 +2,7 @@
 
 ;; main 
 
-(load "init_eval.scm")
+(load "eval_init.scm")
 
 (define cases 
   '((begin (define (fib n)

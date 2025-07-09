@@ -1,4 +1,4 @@
-(load "init_eval.scm")
+(load "eval_init.scm")
 
 (define (let*->nested-lets exp)
   (define (inner clauses body)
