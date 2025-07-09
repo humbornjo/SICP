@@ -17,6 +17,7 @@
           ((definition? exp) (analyze-definition exp))
           ((if? exp) (analyze-if exp))
           ((let? exp) (analyze-let exp))
+          ((let*? exp) (analyze-let* exp))
           ((lambda? exp) (analyze-lambda exp))
           ((begin? exp) (analyze-sequence (begin-actions exp)))
           ((cond? exp) (analyze (cond->if exp)))
@@ -59,6 +60,12 @@
                  (aproc env succeed fail2)))
              ;; failure continuation for evaluating the predicate
              fail))))
+
+(define (analyze-let exp)
+  (analyze (let->combination exp)))
+
+(define (analyze-let* exp)
+  (analyze (let*->nested-lets exp)))
 
 (define (analyze-sequence exps)
   (define (sequentially a b)
@@ -149,3 +156,15 @@
         (else
           (error "Unknown procedure type: EXECUTE-APPLICATION"
                  proc))))
+
+(define (analyze-amb exp)
+  (let ((cprocs (map analyze (amb-choices exp))))
+    (lambda (env succeed fail)
+      (define (try-next choices)
+        (if (null? choices)
+          (fail)
+          ((car choices)
+           env
+           succeed
+           (lambda () (try-next (cdr choices))))))
+      (try-next cprocs))))

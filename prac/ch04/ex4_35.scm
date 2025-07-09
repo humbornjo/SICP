@@ -18,3 +18,33 @@
   (require (<= low high))
   (amb low (an-integer-between (+ low 1) high)))
 
+
+;; Test
+
+(load "eval_init_amb.scm")
+(load "eval_separate_amb.scm")
+
+(define test-input
+  `(begin
+     (define (require predicate) (if (not predicate) (amb)))
+     (define (an-integer-between low high)
+       (require (<= low high))
+       (amb low (an-integer-between (+ low 1) high)))
+     (an-integer-between 1 3)
+     )
+  )
+
+(define test-got nil)
+(define test-want '(3 2 1))
+
+(ambeval test-input
+         the-global-environment
+         ;; ambeval success
+         (lambda (val next-alternative)
+           (set! test-got (cons val test-got))
+           (next-alternative)
+           )
+         ;; ambeval failure
+         (lambda () "Glorious Death"))
+
+(assert (equal? test-got test-want))

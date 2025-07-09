@@ -7,7 +7,7 @@
 
 ;; Answer
 
-(load "init_eval.scm")
+(load "eval_init.scm")
 (load "eval_normal_memo.scm")
 
 ; object might be a lazy pair expression

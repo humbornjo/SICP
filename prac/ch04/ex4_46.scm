@@ -10,4 +10,3 @@
 ; In `(list 'sentence (parse-noun-phrase) (parse-verb-phrase))`,
 ; if `parse-verb-phrase` is evaluated before `parse-noun-phrase`,
 ; parser would consume token for verb phrase before noun phrase.
-

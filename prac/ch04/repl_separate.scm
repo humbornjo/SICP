@@ -1,4 +1,4 @@
 (load "eval_init.scm")
-(load "eval_metacircular.scm")
+(load "eval_separate.scm")
 
 (driver-loop)

@@ -1,4 +1,4 @@
-(load "init_eval.scm")
+(load "eval_init.scm")
 
 (define (named-let? expr) (and (let? expr) (symbol? (cadr expr))))
 

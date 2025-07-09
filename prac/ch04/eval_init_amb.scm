@@ -1,3 +1,61 @@
+(define nouns '(noun student professor cat class))
+(define verbs '(verb studies lectures eats sleeps))
+(define articles '(article the a))
+(define prepositions '(prep for to in by with))
+
+(define (parse-word word-list)
+  (require (not (null? *unparsed*)))
+  (require (memq (car *unparsed*) (cdr word-list)))
+  (let ((found-word (car *unparsed*)))
+    (set! *unparsed* (cdr *unparsed*))
+    (list (car word-list) found-word)))
+
+(define (parse-sentence)
+  (list 'sentence
+        (parse-noun-phrase)
+        (parse-word verbs)))
+
+(define (parse-simple-noun-phrase)
+  (list 'simple-noun-phrase
+        (parse-word articles)
+        (parse-word nouns)))
+
+(define (parse-noun-phrase)
+  (define (maybe-extend noun-phrase)
+    (amb noun-phrase
+         (maybe-extend
+           (list 'noun-phrase
+                 noun-phrase
+                 (parse-prepositional-phrase)))))
+  (maybe-extend (parse-simple-noun-phrase)))
+
+(define (parse-prepositional-phrase)
+  (list 'prep-phrase
+        (parse-word prepositions)
+        (parse-noun-phrase)))
+
+(define (parse-verb-phrase)
+  (define (maybe-extend verb-phrase)
+    (amb verb-phrase
+         (maybe-extend
+           (list 'verb-phrase
+                 verb-phrase
+                 (parse-prepositional-phrase)))))
+  (maybe-extend (parse-word verbs)))
+
+(define (parse-sentence)
+  (list 'sentence (parse-noun-phrase) (parse-verb-phrase)))
+
+(define *unparsed* '())
+(define (parse input)
+  (set! *unparsed* input)
+  (let ((sent (parse-sentence)))
+    (require (null? *unparsed*))
+    sent))
+
+
+
+
 (define nil '())
 
 (define true #t)
@@ -42,6 +100,7 @@
 (define (self-evaluating? exp)
   (cond ((number? exp) true)
         ((string? exp) true)
+        ((boolean? exp) true)
         (else false)))
 (define (tagged-list? exp tag) (if (pair? exp) (eq? (car exp) tag) false))
 (define (if? exp) (tagged-list? exp 'if))
@@ -56,6 +115,7 @@
 (define (definition? exp) (tagged-list? exp 'define))
 (define (compound-procedure? exp) (tagged-list? exp 'procedure))
 (define (primitive-procedure? proc) (tagged-list? proc 'primitive))
+(define (amb? exp) (tagged-list? exp 'amb))
 
 (define (lambda-parameters exp) (cadr exp))
 (define (lambda-body exp) (cddr exp))
@@ -89,6 +149,27 @@
 (define (if-alternative exp) (if (not (null? (cdddr exp)))
                                (cadddr exp)
                                false))
+
+(define (let-clauses exp) (cadr exp))
+(define (let-clause-var clause) (car clause))
+(define (let-clause-value-exp clause) (cadr clause))
+(define (let-body exp) (cddr exp))
+(define (let->combination let-exp)
+  (define vars (map let-clause-var (let-clauses let-exp)))
+  (define value-exps (map let-clause-value-exp (let-clauses let-exp)))
+  (cons
+    (make-lambda vars (let-body let-exp))
+    value-exps))
+(define (let*->nested-lets exp)
+  (define (inner clauses body)
+    (if (null? clauses)
+      (sequence->exp body)
+      (make-let (list (car clauses)) (inner (cdr clauses) body))))
+  (inner (cadr exp) (cddr exp)))
+
+(define (amb-choices exp) (cdr exp))
+(define (ambeval exp env succeed fail)
+  ((analyze exp) env succeed fail))
 
 (define (begin-actions exp) (cdr exp))
 
@@ -155,24 +236,65 @@
       (error "Assert failed\n")))
   )
 
+
+(define (or-local a b)
+  (if a a b))
+
+(define (and-local a b)
+  (if a b a))
+
+(define (xor-local a b)
+  (or-local (and-local a (not b))
+            (and-local (not a) b)))
+
+(define (distinct? items)
+  (cond ((null? items) #t)
+        ((null? (cdr items)) #t)
+        ((member (car items) (cdr items)) #f)
+        (else (distinct? (cdr items)))))
+
+(define (square x) (* x x))
+(define (smallest-divisor n) (find-divisor n 2))
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (+ test-divisor 1)))))
+(define (divides? a b) (= (remainder b a) 0))
+(define (prime? n)
+  (= n (smallest-divisor n)))
+
 (define primitive-procedures
   (list (list 'eq? eq?)
         (list 'car car)
         (list 'not not)
         (list 'cdr cdr)
         (list 'cadr cadr)
+        (list 'list list)
         (list 'cons cons)
         (list 'null? null?)
+        (list 'odd? odd?)
+        (list 'even? even?)
         (list 'error error)
         (list 'assert assert)
         (list 'append append)
         (list 'display display)
+        (list 'member member)
+        (list 'memq memq)
+        (list 'abs abs)
         (list '+ +)
         (list '* *)
         (list '- -)
         (list '= =)
         (list '> >)
         (list '< <)
+        (list '<= <=)
+        (list '>= >=)
+        (list 'not not)
+        (list 'or or-local)
+        (list 'and and-local)
+        (list 'xor xor-local)
+        (list 'prime? prime?)
+        (list 'distinct? distinct?)
         ))
 (define (primitive-implementation proc) (cadr proc))
 (define (primitive-procedure-names) (map car primitive-procedures))
@@ -193,3 +315,47 @@
     (define-variable! 'false false initial-env)
     initial-env))
 (define the-global-environment (setup-environment))
+
+(define (prompt-for-input string)
+  (newline) (newline) (display string) (newline))
+
+(define (announce-output string)
+  (newline) (display string) (newline))
+
+(define (user-print object)
+  (if (compound-procedure? object)
+    (display (list 'compound-procedure
+                   (procedure-parameters object)
+                   (procedure-body object)
+                   '<procedure-env>))
+    (display object)))
+
+(define input-prompt ";;; Amb-Eval input:")
+(define output-prompt ";;; Amb-Eval value:")
+
+(define (driver-loop)
+  (define (internal-loop try-again)
+    (prompt-for-input input-prompt)
+    (let ((input (read)))
+      (if (eq? input 'try-again)
+        (try-again)
+        (begin
+          (newline) (display ";;; Starting a new problem ")
+          (ambeval
+            input
+            the-global-environment
+            ;; ambeval success
+            (lambda (val next-alternative)
+              (announce-output output-prompt)
+              (user-print val)
+              (internal-loop next-alternative))
+            ;; ambeval failure
+            (lambda ()
+              (announce-output
+                ";;; There are no more values of")
+              (user-print input)
+              (driver-loop)))))))
+  (internal-loop
+    (lambda ()
+      (newline) (display ";;; There is no current problem")
+      (driver-loop))))

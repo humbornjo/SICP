@@ -14,12 +14,8 @@
 ; ercise 4.40). Also determine how many solutions there are if
 ; we are not told that Mary Ann’s last name is Moore.
 
-(define (distinct? items)
-  (cond ((null? items) #t)
-        ((null? (cdr items)) #t)
-        ((member (car items) (cdr items)) #f)
-        (else (distinct? (cdr items)))))
-
+; (define test-want '(((Lorna Parker) (Melissa Barnacle) (Rosalind Downing) (Gabrielle Hall) (Mary Moore))
+;                     ((Lorna Downing) (Melissa Barnacle) (Rosalind Parker) (Gabrielle Hall) (Mary Moore))))
 
 ;; Answer
 
@@ -53,11 +49,11 @@
     (require (not (= Gabrielle 4)))
     (require (not (= Mary 5)))
 
-    ; (require (or (not (= Lorna 5)) (= Gabrielle 1)))     ; Mary's father is 1
+    (require (or (not (= Lorna 5)) (= Gabrielle 1)))
     (require (or (not (= Melissa 5)) (= Gabrielle 2)))
     (require (or (not (= Rosalind 5)) (= Gabrielle 3)))
-    ; (require (or (not (= Gabrielle 5)) (= Gabrielle 4))) ; Melissa's father is 4
-    ; (require (or (not (= Mary 5)) (= Gabrielle 5)))      ; Gabrielle cant be Parker's daughter
+    (require (or (not (= Gabrielle 5)) (= Gabrielle 4)))
+    (require (or (not (= Mary 5)) (= Gabrielle 5)))
 
     (require
       (distinct? (list Lorna Melissa Rosalind Gabrielle Mary)))
@@ -69,7 +65,7 @@
 
 
 ;; Mary's Father is not told
-(define (yacht-puzzle-prime)
+(define (yacht-puzzle-advanced)
   (define (print-father number)
     (cond ((= number 1) 'Moore)
           ((= number 2) 'Downing)
@@ -93,11 +89,11 @@
     (require (not (= Gabrielle 4)))
     (require (not (= Mary 5)))
 
-    (require (or (not (= Lorna 5)) (= Gabrielle 1)))     ;! Mary's father is 1
+    (require (or (not (= Lorna 5)) (= Gabrielle 1)))
     (require (or (not (= Melissa 5)) (= Gabrielle 2)))
     (require (or (not (= Rosalind 5)) (= Gabrielle 3)))
-    ; (require (or (not (= Gabrielle 5)) (= Gabrielle 4))) ; Melissa's father is 4
-    ; (require (or (not (= Mary 5)) (= Gabrielle 5)))      ; Gabrielle cant be Parker's daughter
+    (require (or (not (= Gabrielle 5)) (= Gabrielle 4)))
+    (require (or (not (= Mary 5)) (= Gabrielle 5)))
     (require
       (distinct? (list Lorna Melissa Rosalind Gabrielle Mary)))
     (list (list 'Lorna (print-father Lorna))
@@ -106,6 +102,134 @@
           (list 'Gabrielle (print-father Gabrielle))
           (list 'Mary (print-father Mary)))))
 
+
+;; Test
+
+; yacht-puzzle
+(define test-input-1
+  `(begin
+     (define (require predicate) (if (not predicate) (amb)))
+
+     (define (yacht-puzzle)
+       (define (print-father number)
+         (cond ((= number 1) 'Moore)
+               ((= number 2) 'Downing)
+               ((= number 3) 'Hall)
+               ((= number 4) 'Barnacle)
+               ((= number 5) 'Parker)
+               (else (error "Your Father is Ging Freecss")))
+         )
+       (let ((Lorna (amb 1 2 3 4 5))
+             (Melissa(amb 1 2 3 4 5))
+             (Rosalind (amb 1 2 3 4 5))
+             (Gabrielle (amb 1 2 3 4 5))
+             (Mary (amb 1 2 3 4 5)))
+         (require (= Mary 1))
+         (require (= Melissa 4))
+         (require (not (= Gabrielle 5)))
+
+         (require (not (= Lorna 1)))
+         (require (not (= Melissa 2)))
+         (require (not (= Rosalind 3)))
+         (require (not (= Gabrielle 4)))
+         (require (not (= Mary 5)))
+
+         (require (or (not (= Lorna 5)) (= Gabrielle 1)))
+         (require (or (not (= Melissa 5)) (= Gabrielle 2)))
+         (require (or (not (= Rosalind 5)) (= Gabrielle 3)))
+         (require (or (not (= Gabrielle 5)) (= Gabrielle 4)))
+         (require (or (not (= Mary 5)) (= Gabrielle 5)))
+
+         (require
+           (distinct? (list Lorna Melissa Rosalind Gabrielle Mary)))
+         (list (list 'Lorna (print-father Lorna))
+               (list 'Melissa (print-father Melissa))
+               (list 'Rosalind (print-father Rosalind))
+               (list 'Gabrielle (print-father Gabrielle))
+               (list 'Mary (print-father Mary)))))
+
+     (yacht-puzzle)
+     )
+  )
+
+; yacht-puzzle-advanced
+(define test-input-2
+  `(begin
+     (define (require predicate) (if (not predicate) (amb)))
+
+     (define (yacht-puzzle-advanced)
+       (define (print-father number)
+         (cond ((= number 1) 'Moore)
+               ((= number 2) 'Downing)
+               ((= number 3) 'Hall)
+               ((= number 4) 'Barnacle)
+               ((= number 5) 'Parker)
+               (else (error "Your Father is Ging Freecss")))
+         )
+       (let ((Lorna (amb 1 2 3 4 5))
+             (Melissa(amb 1 2 3 4 5))
+             (Rosalind (amb 1 2 3 4 5))
+             (Gabrielle (amb 1 2 3 4 5))
+             (Mary (amb 1 2 3 4 5)))
+         ;! (require (= Mary 1))
+         (require (= Melissa 4))
+         (require (not (= Gabrielle 5)))
+
+         (require (not (= Lorna 1)))
+         (require (not (= Melissa 2)))
+         (require (not (= Rosalind 3)))
+         (require (not (= Gabrielle 4)))
+         (require (not (= Mary 5)))
+
+         (require (or (not (= Lorna 5)) (= Gabrielle 1)))
+         (require (or (not (= Melissa 5)) (= Gabrielle 2)))
+         (require (or (not (= Rosalind 5)) (= Gabrielle 3)))
+         (require (or (not (= Gabrielle 5)) (= Gabrielle 4)))
+         (require (or (not (= Mary 5)) (= Gabrielle 5)))
+         (require
+           (distinct? (list Lorna Melissa Rosalind Gabrielle Mary)))
+         (list (list 'Lorna (print-father Lorna))
+               (list 'Melissa (print-father Melissa))
+               (list 'Rosalind (print-father Rosalind))
+               (list 'Gabrielle (print-father Gabrielle))
+               (list 'Mary (print-father Mary)))))
+
+     (yacht-puzzle-advanced)
+     )
+  )
+
+
+(load "./eval_init_amb.scm")
+(load "./eval_separate_amb.scm")
+
+(define test-got-1 nil)
+(define test-want-1 '(((Lorna Downing) (Melissa Barnacle) (Rosalind Parker) (Gabrielle Hall) (Mary Moore))))
+(ambeval test-input-1
+         the-global-environment
+         ;; ambeval success
+         (lambda (val next-alternative)
+           (set! test-got-1 (cons val test-got-1))
+           (next-alternative)
+           )
+         ;; ambeval failure
+         (lambda () (announce-output
+                      ";;; There are no more values of")))
+(assert (equal? test-got-1 test-want-1))
+
+(define test-got-2 nil)
+(define test-want-2 '(((Lorna Parker) (Melissa Barnacle) (Rosalind Downing) (Gabrielle Moore) (Mary Hall))
+                      ((Lorna Downing) (Melissa Barnacle) (Rosalind Parker) (Gabrielle Hall) (Mary Moore))))
+(ambeval test-input-2
+         the-global-environment
+         ;; ambeval success
+         (lambda (val next-alternative)
+           (set! test-got-2 (cons val test-got-2))
+           (next-alternative)
+           )
+         ;; ambeval failure
+         (lambda () (announce-output
+                      ";;; There are no more values of")))
+(assert (equal? test-got-2 test-want-2))
 
 
 

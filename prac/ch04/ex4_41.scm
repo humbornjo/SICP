@@ -1,13 +1,13 @@
 ; Write an ordinary Scheme program to solve the multiple dwelling
 ; puzzle.
 
+;; Answer
+
 (define (distinct? items)
   (cond ((null? items) #t)
         ((null? (cdr items)) #t)
         ((member (car items) (cdr items)) #f)
         (else (distinct? (cdr items)))))
-
-;; Answer
 
 (define (multiple-dwelling)
   (define tenants (list 1 1 1 1 1))
@@ -39,25 +39,32 @@
         (not (= (abs (- fletcher cooper)) 1)))
       ))
 
-  (define (print tenants)
+  (define (format tenants)
     (let ((baker (car tenants))
           (cooper (cadr tenants))
           (fletcher (caddr tenants))
           (miller (cadddr tenants))
           (smith (cadr (cdddr tenants))))
 
-      (display (list (list 'baker baker) (list 'cooper cooper)
-                     (list 'fletcher fletcher) (list 'miller miller)
-                     (list 'smith smith)))))
+      (list (list 'baker baker) (list 'cooper cooper)
+                    (list 'fletcher fletcher) (list 'miller miller)
+                    (list 'smith smith))))
 
   (define (inner tenants)
     (if (inc tenants)
       (begin
-        (if (check tenants) (print tenants))
+        (if (check tenants)
+            (set! test-got (cons (format tenants) test-got))) ; For test
         (inner tenants))))
 
   (inner tenants))
 
 
-;; ((baker 3) (cooper 2) (fletcher 4) (miller 5) (smith 1))
-;; (multiple-dwelling)
+;; Test
+
+(define test-got '())
+(define test-want '(((baker 3) (cooper 2) (fletcher 4) (miller 5) (smith 1))))
+
+(multiple-dwelling)
+
+(assert (equal? test-got test-want))
