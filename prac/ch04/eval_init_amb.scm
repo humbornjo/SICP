@@ -224,6 +224,7 @@
         (list 'not not)
         (list 'cdr cdr)
         (list 'cadr cadr)
+        (list 'list list)
         (list 'cons cons)
         (list 'null? null?)
         (list 'error error)

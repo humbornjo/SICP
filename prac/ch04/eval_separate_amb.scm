@@ -60,6 +60,16 @@
              ;; failure continuation for evaluating the predicate
              fail))))
 
+(define (let->combination exp)
+  (let ((clauses (cadr exp))
+        (body (caddr exp)))
+    (let ((vars (map car clauses))
+          (vals (map cadr clauses)))
+      (cons (make-lambda vars (list body)) vals))))
+
+(define (analyze-let exp)
+  (analyze (let->combination exp)))
+
 (define (analyze-sequence exps)
   (define (sequentially a b)
     (lambda (env succeed fail)
