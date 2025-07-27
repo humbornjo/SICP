@@ -28,3 +28,15 @@ The evaluation of an expression will finish by calling one of these two continua
 - if the evaluation results in the discovery of a dead end, the failure continuation is called.
 
 **It is the job of the success continuation to receive a value and proceed with the computation. Along with that value, the success continuation is passed another failure continuation, which is to be called subsequently if the use of that value leads to a dead end.**
+
+## 4.4 Logic Programming
+
+In a nondeterministic language, expressions can have more than one value, and, as a result, the computation is dealing with relations rather than with single-valued functions. Logic programming extends this idea by combining a relational vision of programming with a powerful kind of symbolic pattern matching called unification.
+
+> What is Logic Programming? "What is" instead of "How to". However, the neat part is: "What is" can't always reveal the way of "How to". If the language itself does not provide the primitive of "How to", like `defer`, It is impossible for user to run a function at the end of a procedure call by simply specifying "this snippet run at the end".
+
+### 4.4.1 Deductive Information Retrieval
+
+`(rule ⟨conclusion⟩ ⟨body⟩)`
+
+> Understanding the append example case in the book will open a Door to a new world. Btw, you should see roast in exam 4.63.
