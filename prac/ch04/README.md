@@ -40,3 +40,23 @@ In a nondeterministic language, expressions can have more than one value, and, a
 `(rule ⟨conclusion⟩ ⟨body⟩)`
 
 > Understanding the append example case in the book will open a Door to a new world. Btw, you should see roast in exam 4.63.
+
+### 4.4.2 How the query system works?
+
+In general, the query evaluator uses the following method to apply a rule when trying to establish a query pattern in a frame that specifies bindings for some of the pattern variables:
+
+- Unify the query with the conclusion of the rule to form, if successful, an extension of the original frame.
+- Relative to the extended frame, evaluate the query formed by the body of the rule.
+
+Notice how similar this is to the method for applying a procedure in the eval/apply evaluator for Lisp:
+
+- Bind the procedure’s parameters to its arguments to form a frame that extends the original procedure environment.
+- Relative to the extended environment, evaluate the expression formed by the body of the procedure.
+
+The similarity between the two evaluators should come as no surprise.
+
+### 4.4.3 Is Logic Programming Mathematical Logic?
+
+The aim of logic programming is to provide the programmer with techniques for decomposing a computational problem into two separate problems: "what" is to be computed, and "how" this should be computed.
+
+There is also a much more serious way in which the not of the query language differs from the not of mathematical logic. In logic, we interpret the statement "not P" to mean that P is not true. In the query system, however, "not P " means that P is not deducible from the knowledge in the data base. The not of logic programming languages reflects the so-called closed world assumption that all relevant information has been included in the data base.
