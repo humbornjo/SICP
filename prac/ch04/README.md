@@ -55,8 +55,26 @@ Notice how similar this is to the method for applying a procedure in the eval/ap
 
 The similarity between the two evaluators should come as no surprise.
 
+> Under what circumstances will an `and` query could, in the worst case, have to perform a number of matches that is
+> exponential in the number of queries? Say a `and` query has `n` subqueries, and all variables in each subquery never
+> overlap. Then the stream will be exponentially expanded. (p621)
+
 ### 4.4.3 Is Logic Programming Mathematical Logic?
 
 The aim of logic programming is to provide the programmer with techniques for decomposing a computational problem into two separate problems: "what" is to be computed, and "how" this should be computed.
 
 There is also a much more serious way in which the not of the query language differs from the not of mathematical logic. In logic, we interpret the statement "not P" to mean that P is not true. In the query system, however, "not P " means that P is not deducible from the knowledge in the data base. The not of logic programming languages reflects the so-called closed world assumption that all relevant information has been included in the data base.
+
+### 4.4.4 Implementing the Query System
+
+#### 4.4.4.3
+
+If a pattern contains a dot followed by a pattern variable, the pattern variable matches the rest of the data list (rather than the next element of the data list), just as one would expect with the dotted-tail notation described in Exercise 2.20. Although the pattern matcher we have just implemented doesn’t look for dots, it does behave as we want. This is because the Lisp read primitive, which is used by query-driver-loop to read the query and represent it as a list structure, treats dots in a special way.
+
+When read sees a dot, instead of making the next item be the next element of a list (the car of a cons whose cdr will be the rest of the list) it makes the next item be the cdr of the list structure. For example, the list structure produced by read for the pattern (computer ?type) could be constructed by evaluating the expression (cons 'computer (cons '?type '())), and that for (computer . ?type) could be constructed by evaluating the expression (cons 'computer '?type).
+
+Thus, as pattern-match recursively compares cars and cdrs of a data list and a paern that had a dot, it eventually matches the variable after the dot (which is a cdr of the pattern) against a sublist of the data list, binding the variable to that list. For example, matching the pattern (computer . ?type) against (computer programmer trainee) will match ?type against the list (programmer trainee).
+
+#### 4.4.4.4
+
+The unifier is like the pattern matcher except that it is symmetrical—variables are allowed on both sides of the match. unify-match is basically the same as pattern-match, except that there is extra code (marked “\*\*\*” below) to handle the case where the object on the right side of the match is a variable.
