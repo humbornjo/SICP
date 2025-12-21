@@ -34,7 +34,7 @@
 ; checked with car, we can add some more if clause (or just
 ; leave it outside the data-directed table)
 
-(load "../ch03/eval_init_table.scm")
+(load "../chapter_03/eval_init_table.scm")
 
 (define (tag exp)
   (if (pair? exp)

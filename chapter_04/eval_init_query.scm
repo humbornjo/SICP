@@ -1,6 +1,6 @@
 (load "../init.scm")
-(load "../ch03/eval_init_stream.scm")
-(load "../ch03/eval_init_table.scm")
+(load "../chapter_03/eval_init_stream.scm")
+(load "../chapter_03/eval_init_table.scm")
 
 (define input-prompt ";;; Query input:")
 (define output-prompt ";;; Query results:")
