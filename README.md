@@ -20,7 +20,6 @@ I really appreciate the quote MIT guys put at the end of each interpretation.
 # Usage
 
 ```bash
-./eval.sh <FILE_NAME> # mit-scheme
 csi -s <FILE_NAME>    # chicken
 ```
 

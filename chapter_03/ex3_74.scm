@@ -1,0 +1,27 @@
+;; Answer
+
+(load "./eval_init_stream.scm")
+(load "./ex3_70.scm")
+(load "./ex3_67.scm")
+(load "./ex3_54.scm")
+
+(define sense-data ones)
+
+(define (sign-change-detector x last-value) nil)
+
+(define (make-zero-crossings input-stream last-value)
+  (cons-stream
+    (sign-change-detector
+      (stream-car input-stream)
+      last-value)
+    (make-zero-crossings
+      (stream-cdr input-stream)
+      (stream-car input-stream))))
+
+(define zero-crossings
+  (make-zero-crossings sense-data 0))
+
+(define zero-crossings
+  (stream-map sign-change-detector
+              sense-data
+              (cons-stream 0 sense-data)))
